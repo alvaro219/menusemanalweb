@@ -202,16 +202,17 @@ export class FriendsComponent implements OnInit {
   async loadData() {
     this.loading = true;
     try {
-      const [friends, requests, shared] = await Promise.all([
+      const [friendsResult, requestsResult, sharedResult] = await Promise.allSettled([
         this.supabase.getFriends(),
         this.supabase.getFriendRequests(),
         this.supabase.getSharedMenus()
       ]);
-      this.friends = friends;
-      this.allRequests = requests;
-      this.sharedMenus = shared;
-    } catch (err) {
-      console.error('Error loading friends data:', err);
+      this.friends = friendsResult.status === 'fulfilled' ? friendsResult.value : [];
+      this.allRequests = requestsResult.status === 'fulfilled' ? requestsResult.value : [];
+      this.sharedMenus = sharedResult.status === 'fulfilled' ? sharedResult.value : [];
+      if (friendsResult.status === 'rejected') console.error('Error loading friends:', friendsResult.reason);
+      if (requestsResult.status === 'rejected') console.error('Error loading requests:', requestsResult.reason);
+      if (sharedResult.status === 'rejected') console.error('Error loading shared menus:', sharedResult.reason);
     } finally {
       this.loading = false;
     }

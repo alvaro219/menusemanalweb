@@ -337,18 +337,24 @@ export class SupabaseService {
   async getSharedMenus(): Promise<SharedMenu[]> {
     const { data, error } = await this.supabase
       .from('shared_menus')
-      .select(`
-        *,
-        owner:user_profiles!owner_id(id, username, display_name)
-      `)
+      .select('*')
       .eq('shared_with_id', this.currentUser?.id)
       .order('shared_at', { ascending: false });
     if (error) throw error;
-    return (data || []).map((r: any) => ({
-      ...r,
-      owner_name: r.owner?.display_name || r.owner?.username,
-      owner_email: r.owner?.username,
-    }));
+    // Enrich with owner profile data
+    const menus = data || [];
+    for (const menu of menus) {
+      try {
+        const { data: profile } = await this.supabase
+          .from('user_profiles')
+          .select('id, username, display_name')
+          .eq('id', (menu as any).owner_id)
+          .single();
+        (menu as any).owner_name = profile?.display_name || profile?.username || '';
+        (menu as any).owner_email = profile?.username || '';
+      } catch { /* ignore */ }
+    }
+    return menus;
   }
 
   async deleteSharedMenu(id: string): Promise<void> {
