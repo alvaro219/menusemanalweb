@@ -241,13 +241,16 @@ export class SupabaseService {
   }
 
   // Friend Requests
-  async sendFriendRequest(receiverEmail: string): Promise<FriendRequest> {
+  async sendFriendRequest(searchQuery: string): Promise<FriendRequest> {
+    // Search by username or display_name
     const { data: users, error: userError } = await this.supabase
       .from('user_profiles')
       .select('id')
-      .eq('email', receiverEmail)
+      .or(`username.ilike.%${searchQuery}%,display_name.ilike.%${searchQuery}%`)
+      .neq('id', this.currentUser?.id)
+      .limit(1)
       .single();
-    if (userError) throw new Error('Usuario no encontrado');
+    if (userError || !users) throw new Error('Usuario no encontrado');
     
     const { data, error } = await this.supabase
       .from('friendships')
@@ -267,17 +270,17 @@ export class SupabaseService {
       .from('friendships')
       .select(`
         *,
-        sender:user_profiles!friendships_sender_id_fkey(id, email, display_name, username),
-        receiver:user_profiles!friendships_receiver_id_fkey(id, email, display_name, username)
+        sender:user_profiles!sender_id(id, username, display_name, avatar_url),
+        receiver:user_profiles!receiver_id(id, username, display_name, avatar_url)
       `)
       .or(`sender_id.eq.${this.currentUser?.id},receiver_id.eq.${this.currentUser?.id}`)
       .order('created_at', { ascending: false });
     if (error) throw error;
     return (data || []).map((r: any) => ({
       ...r,
-      sender_email: r.sender?.email,
+      sender_email: r.sender?.username,
       sender_name: r.sender?.display_name || r.sender?.username,
-      receiver_email: r.receiver?.email,
+      receiver_email: r.receiver?.username,
       receiver_name: r.receiver?.display_name || r.receiver?.username,
     }));
   }
@@ -295,8 +298,8 @@ export class SupabaseService {
       .from('friendships')
       .select(`
         *,
-        sender:user_profiles!friendships_sender_id_fkey(id, email, display_name, username, avatar_url),
-        receiver:user_profiles!friendships_receiver_id_fkey(id, email, display_name, username, avatar_url)
+        sender:user_profiles!sender_id(id, username, display_name, avatar_url),
+        receiver:user_profiles!receiver_id(id, username, display_name, avatar_url)
       `)
       .eq('status', 'accepted')
       .or(`sender_id.eq.${this.currentUser?.id},receiver_id.eq.${this.currentUser?.id}`);
@@ -304,9 +307,9 @@ export class SupabaseService {
     
     return (data || []).map((r: any) => {
       if (r.sender_id === this.currentUser?.id) {
-        return { id: r.receiver.id, email: r.receiver.email, display_name: r.receiver.display_name || r.receiver.username, avatar_url: r.receiver.avatar_url };
+        return { id: r.receiver.id, email: r.receiver.username, display_name: r.receiver.display_name || r.receiver.username, avatar_url: r.receiver.avatar_url };
       }
-      return { id: r.sender.id, email: r.sender.email, display_name: r.sender.display_name || r.sender.username, avatar_url: r.sender.avatar_url };
+      return { id: r.sender.id, email: r.sender.username, display_name: r.sender.display_name || r.sender.username, avatar_url: r.sender.avatar_url };
     });
   }
 
@@ -336,7 +339,7 @@ export class SupabaseService {
       .from('shared_menus')
       .select(`
         *,
-        owner:user_profiles!shared_menus_owner_id_fkey(id, email, display_name, username)
+        owner:user_profiles!owner_id(id, username, display_name)
       `)
       .eq('shared_with_id', this.currentUser?.id)
       .order('shared_at', { ascending: false });
@@ -344,7 +347,7 @@ export class SupabaseService {
     return (data || []).map((r: any) => ({
       ...r,
       owner_name: r.owner?.display_name || r.owner?.username,
-      owner_email: r.owner?.email,
+      owner_email: r.owner?.username,
     }));
   }
 
@@ -361,6 +364,9 @@ export class SupabaseService {
       .eq('id', this.currentUser?.id)
       .maybeSingle();
     if (error) throw error;
+    if (data) {
+      data.email = data.username || data.email;
+    }
     return data;
   }
 

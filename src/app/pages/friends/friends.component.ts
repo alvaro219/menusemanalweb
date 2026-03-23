@@ -48,7 +48,7 @@ import { FriendRequest, UserProfile, SharedMenu, WeeklyMenu, MEAL_TYPE_COLORS, M
       <!-- Send Friend Request -->
       <div class="glass-card p-4 !rounded-xl">
         <div class="flex gap-3">
-          <input [(ngModel)]="friendEmail" placeholder="Email del amigo..." class="input-field flex-1" (keyup.enter)="sendRequest()">
+          <input [(ngModel)]="friendEmail" placeholder="Nombre de usuario o nombre..." class="input-field flex-1" (keyup.enter)="sendRequest()">
           <button (click)="sendRequest()" [disabled]="!friendEmail.trim() || sendingRequest" class="btn-primary flex items-center gap-2 text-sm whitespace-nowrap">
             <span *ngIf="sendingRequest" class="material-icons-round animate-spin text-base">refresh</span>
             <span *ngIf="!sendingRequest" class="material-icons-round text-base">person_add</span>
