@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
 import {
   Meal, MealType, MealTime, DayMenu, DayMealEntry, WeeklyMenu,
+  MenuConfig, MealTimeDistribution, TypeDistribution, CustomMealType,
   DAYS_OF_WEEK, DEFAULT_MEAL_TIMES, MEAL_TYPE_COLORS, MEAL_TYPE_ICONS, MEAL_TYPE_LABELS
 } from '../../models/meal.model';
 
@@ -227,6 +228,8 @@ export class MenuComponent implements OnInit {
   meals: Meal[] = [];
   mealTimes: MealTime[] = [];
   friends: any[] = [];
+  customTypes: CustomMealType[] = [];
+  menuConfig: MenuConfig | null = null;
   mealTypes = Object.values(MealType);
   loading = true;
   showWeeklyView = false;
@@ -252,15 +255,19 @@ export class MenuComponent implements OnInit {
   async loadData() {
     this.loading = true;
     try {
-      const [meals, mealTimes, menu, friends] = await Promise.all([
+      const [meals, mealTimes, menu, friends, config, customTypes] = await Promise.all([
         this.supabase.getMeals(),
         this.supabase.getMealTimes(),
         this.supabase.getWeeklyMenu(),
-        this.supabase.getFriends()
+        this.supabase.getFriends(),
+        this.supabase.getMenuConfig(),
+        this.supabase.getCustomMealTypes()
       ]);
       this.meals = meals.filter(m => !m.is_hidden);
       this.mealTimes = mealTimes.length > 0 ? mealTimes : DEFAULT_MEAL_TIMES as any;
       this.friends = friends;
+      this.menuConfig = config;
+      this.customTypes = customTypes.filter(ct => ct.is_active);
       this.weeklyMenu = menu;
       if (!this.weeklyMenu || !this.weeklyMenu.days || this.weeklyMenu.days.length === 0) {
         this.generateMenu();
@@ -272,14 +279,44 @@ export class MenuComponent implements OnInit {
     }
   }
 
+  /** Pick a meal type based on weighted distribution for a given meal_time */
+  private pickTypeByDistribution(mealTimeName: string): string | null {
+    const dist = this.menuConfig?.per_meal_time_distribution?.find(d => d.meal_time === mealTimeName);
+    if (!dist || dist.types.length === 0) return null;
+    const total = dist.types.reduce((s, t) => s + t.percentage, 0);
+    if (total <= 0) return null;
+    let r = Math.random() * total;
+    for (const t of dist.types) {
+      r -= t.percentage;
+      if (r <= 0) return t.meal_type;
+    }
+    return dist.types[dist.types.length - 1].meal_type;
+  }
+
+  /** Pick a random meal for a meal_time, respecting type distribution and avoiding used IDs */
+  private pickMeal(mealTimeName: string, usedIds: Set<string>): Meal | null {
+    const available = this.meals.filter(m => m.meal_time === mealTimeName && !usedIds.has(m.id || ''));
+    if (available.length === 0) return null;
+
+    const desiredType = this.pickTypeByDistribution(mealTimeName);
+    if (desiredType) {
+      const typed = available.filter(m => m.type === desiredType || (m as any).custom_type_id === desiredType);
+      if (typed.length > 0) {
+        return typed[Math.floor(Math.random() * typed.length)];
+      }
+    }
+    // Fallback: pick any available meal
+    return available[Math.floor(Math.random() * available.length)];
+  }
+
   async generateMenu() {
+    const usedIds = new Set<string>();
+
     const days: DayMenu[] = DAYS_OF_WEEK.map(day => ({
       day,
       meals: this.mealTimes.map(mt => {
-        const filtered = this.meals.filter(m => m.meal_time === mt.name);
-        const meal = filtered.length > 0
-          ? filtered[Math.floor(Math.random() * filtered.length)]
-          : null;
+        const meal = this.pickMeal(mt.name, usedIds);
+        if (meal?.id) usedIds.add(meal.id);
         return {
           meal_time: mt.name,
           meal_id: meal?.id,
@@ -297,9 +334,17 @@ export class MenuComponent implements OnInit {
   async randomizeMeal(dayIndex: number, mealIndex: number) {
     if (!this.weeklyMenu) return;
     const entry = this.weeklyMenu.days[dayIndex].meals[mealIndex];
-    const filtered = this.meals.filter(m => m.meal_time === entry.meal_time);
-    if (filtered.length === 0) return;
-    const meal = filtered[Math.floor(Math.random() * filtered.length)];
+
+    // Collect all meal IDs already used in the menu, excluding the current slot
+    const usedIds = new Set<string>();
+    for (const day of this.weeklyMenu.days) {
+      for (const e of day.meals) {
+        if (e !== entry && e.meal_id) usedIds.add(e.meal_id);
+      }
+    }
+
+    const meal = this.pickMeal(entry.meal_time, usedIds);
+    if (!meal) return;
     entry.meal_id = meal.id;
     entry.meal_name = meal.name;
     entry.meal_type = meal.type;

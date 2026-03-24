@@ -62,11 +62,17 @@ export interface MenuConfig {
   id?: string;
   user_id?: string;
   type_distribution: TypeDistribution[];
+  per_meal_time_distribution?: MealTimeDistribution[];
 }
 
 export interface TypeDistribution {
-  meal_type: MealType;
+  meal_type: string;
   percentage: number;
+}
+
+export interface MealTimeDistribution {
+  meal_time: string;
+  types: TypeDistribution[];
 }
 
 export interface FriendRequest {

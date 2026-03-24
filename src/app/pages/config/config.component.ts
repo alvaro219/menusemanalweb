@@ -3,7 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
 import { ThemeService, ThemeColors, DEFAULT_THEME } from '../../services/theme.service';
-import { MenuConfig, MealType, TypeDistribution, MEAL_TYPE_COLORS, MEAL_TYPE_ICONS, MEAL_TYPE_LABELS } from '../../models/meal.model';
+import {
+  MenuConfig, MealType, MealTime, MealTimeDistribution, TypeDistribution,
+  CustomMealType, DEFAULT_MEAL_TIMES,
+  MEAL_TYPE_COLORS, MEAL_TYPE_ICONS, MEAL_TYPE_LABELS
+} from '../../models/meal.model';
 
 @Component({
   selector: 'app-config',
@@ -90,41 +94,54 @@ import { MenuConfig, MealType, TypeDistribution, MEAL_TYPE_COLORS, MEAL_TYPE_ICO
         <p *ngIf="themeMsg" class="text-center text-green-400 text-sm mt-2">{{ themeMsg }}</p>
       </div>
 
-      <!-- Type Distribution -->
+      <!-- Per-MealTime Type Distribution -->
       <div class="glass-card p-6 !rounded-xl">
-        <h2 class="text-lg font-semibold text-white mb-4">Distribución de Tipos</h2>
-        <p class="text-sm text-slate-400 mb-6">Configura el porcentaje de cada tipo de comida en el menú generado</p>
-        
-        <div class="space-y-5">
-          <div *ngFor="let dist of typeDistribution" class="space-y-2">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="material-icons-round text-sm" [style.color]="getMealTypeColor(dist.meal_type)">
-                  {{ getMealTypeIcon(dist.meal_type) }}
-                </span>
-                <span class="text-sm font-medium text-slate-200">{{ getMealTypeLabel(dist.meal_type) }}</span>
+        <h2 class="text-lg font-semibold text-white mb-2">Distribución de Tipos por Tiempo de Comida</h2>
+        <p class="text-sm text-slate-400 mb-6">Configura el porcentaje de cada tipo para cada tiempo de comida</p>
+
+        <!-- Meal time tabs -->
+        <div class="flex gap-1 p-1 rounded-xl bg-slate-800/40 mb-6">
+          <button *ngFor="let mt of mealTimes" (click)="selectedMealTime = mt.name"
+                  [class]="selectedMealTime === mt.name ? 'bg-sky-500/20 text-sky-300' : 'text-slate-400 hover:text-slate-300'"
+                  class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2">
+            <span>{{ mt.emoji }}</span>
+            {{ mt.display_name }}
+          </button>
+        </div>
+
+        <!-- Sliders for selected meal time -->
+        <div *ngFor="let mtDist of perMealTimeDist">
+          <div *ngIf="mtDist.meal_time === selectedMealTime" class="space-y-5">
+            <div *ngFor="let dist of mtDist.types" class="space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="material-icons-round text-sm" [style.color]="getTypeColor(dist.meal_type)">
+                    {{ getTypeIcon(dist.meal_type) }}
+                  </span>
+                  <span class="text-sm font-medium text-slate-200">{{ getTypeLabel(dist.meal_type) }}</span>
+                </div>
+                <span class="text-sm font-bold text-sky-300">{{ dist.percentage }}%</span>
               </div>
-              <span class="text-sm font-bold text-sky-300">{{ dist.percentage }}%</span>
+              <div class="relative">
+                <input type="range" [(ngModel)]="dist.percentage" min="0" max="100" step="5"
+                       class="w-full h-2 rounded-full appearance-none cursor-pointer"
+                       [style.background]="'linear-gradient(to right, ' + getTypeColor(dist.meal_type) + ' ' + dist.percentage + '%, rgba(30,41,59,0.6) ' + dist.percentage + '%)'">
+              </div>
             </div>
-            <div class="relative">
-              <input type="range" [(ngModel)]="dist.percentage" min="0" max="100" step="5"
-                     class="w-full h-2 rounded-full appearance-none cursor-pointer"
-                     [style.background]="'linear-gradient(to right, ' + getMealTypeColor(dist.meal_type) + ' ' + dist.percentage + '%, rgba(30,41,59,0.6) ' + dist.percentage + '%)'">
+
+            <div class="p-3 rounded-xl" [class]="getMealTimeTotal(mtDist) === 100 ? 'bg-green-500/10 border border-green-500/20' : 'bg-amber-500/10 border border-amber-500/20'">
+              <div class="flex items-center justify-between">
+                <span class="text-sm" [class]="getMealTimeTotal(mtDist) === 100 ? 'text-green-400' : 'text-amber-400'">
+                  Total: {{ getMealTimeTotal(mtDist) }}%
+                </span>
+                <span *ngIf="getMealTimeTotal(mtDist) !== 100" class="text-xs text-amber-400">Debe sumar 100%</span>
+                <span *ngIf="getMealTimeTotal(mtDist) === 100" class="material-icons-round text-green-400 text-sm">check_circle</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="mt-6 p-3 rounded-xl" [class]="totalPercentage === 100 ? 'bg-green-500/10 border border-green-500/20' : 'bg-amber-500/10 border border-amber-500/20'">
-          <div class="flex items-center justify-between">
-            <span class="text-sm" [class]="totalPercentage === 100 ? 'text-green-400' : 'text-amber-400'">
-              Total: {{ totalPercentage }}%
-            </span>
-            <span *ngIf="totalPercentage !== 100" class="text-xs text-amber-400">Debe sumar 100%</span>
-            <span *ngIf="totalPercentage === 100" class="material-icons-round text-green-400 text-sm">check_circle</span>
-          </div>
-        </div>
-
-        <button (click)="saveConfig()" [disabled]="saving || totalPercentage !== 100" class="btn-primary w-full mt-4 flex items-center justify-center gap-2">
+        <button (click)="saveConfig()" [disabled]="saving || !allMealTimesValid()" class="btn-primary w-full mt-4 flex items-center justify-center gap-2">
           <span *ngIf="saving" class="material-icons-round animate-spin text-lg">refresh</span>
           {{ saving ? 'Guardando...' : 'Guardar Configuración' }}
         </button>
@@ -165,7 +182,11 @@ import { MenuConfig, MealType, TypeDistribution, MEAL_TYPE_COLORS, MEAL_TYPE_ICO
   `]
 })
 export class ConfigComponent implements OnInit {
-  typeDistribution: TypeDistribution[] = [];
+  mealTimes: MealTime[] = [];
+  customTypes: CustomMealType[] = [];
+  allTypeKeys: string[] = [];
+  perMealTimeDist: MealTimeDistribution[] = [];
+  selectedMealTime = '';
   loading = true;
   saving = false;
   savedMsg = '';
@@ -198,38 +219,87 @@ export class ConfigComponent implements OnInit {
 
   constructor(private supabase: SupabaseService, private themeService: ThemeService) {}
 
-  get totalPercentage(): number {
-    return this.typeDistribution.reduce((sum, d) => sum + d.percentage, 0);
-  }
-
   async ngOnInit() {
     this.loading = true;
     try {
       this.themeColors = this.themeService.getTheme();
-      const config = await this.supabase.getMenuConfig();
-      if (config?.type_distribution) {
-        this.typeDistribution = config.type_distribution;
-      } else {
-        this.typeDistribution = [
-          { meal_type: MealType.protein, percentage: 30 },
-          { meal_type: MealType.fish, percentage: 20 },
-          { meal_type: MealType.carbohydrates, percentage: 25 },
-          { meal_type: MealType.vegetables, percentage: 25 },
-        ];
-      }
-      const profile = await this.supabase.getProfile();
+
+      const [config, mealTimes, customTypes, profile] = await Promise.all([
+        this.supabase.getMenuConfig(),
+        this.supabase.getMealTimes(),
+        this.supabase.getCustomMealTypes(),
+        this.supabase.getProfile()
+      ]);
+
+      this.mealTimes = mealTimes.length > 0 ? mealTimes : DEFAULT_MEAL_TIMES as any;
+      this.customTypes = customTypes.filter(ct => ct.is_active);
       this.displayName = profile?.display_name || '';
+
+      // Build allTypeKeys: default + custom
+      this.allTypeKeys = [
+        ...Object.values(MealType),
+        ...this.customTypes.map(ct => ct.name)
+      ];
+
+      // Set initial selected meal time
+      if (this.mealTimes.length > 0) {
+        this.selectedMealTime = this.mealTimes[0].name;
+      }
+
+      // Load or build per-meal-time distribution
+      if (config?.per_meal_time_distribution && config.per_meal_time_distribution.length > 0) {
+        this.perMealTimeDist = config.per_meal_time_distribution;
+        // Ensure all meal times and all type keys exist
+        for (const mt of this.mealTimes) {
+          let mtDist = this.perMealTimeDist.find(d => d.meal_time === mt.name);
+          if (!mtDist) {
+            mtDist = { meal_time: mt.name, types: this.buildDefaultTypes() };
+            this.perMealTimeDist.push(mtDist);
+          } else {
+            // Add any missing type keys
+            for (const key of this.allTypeKeys) {
+              if (!mtDist.types.find(t => t.meal_type === key)) {
+                mtDist.types.push({ meal_type: key, percentage: 0 });
+              }
+            }
+          }
+        }
+      } else {
+        // Build default distribution for each meal time
+        this.perMealTimeDist = this.mealTimes.map(mt => ({
+          meal_time: mt.name,
+          types: this.buildDefaultTypes()
+        }));
+      }
     } catch (err) {
       console.error('Error loading config:', err);
-      this.typeDistribution = [
-        { meal_type: MealType.protein, percentage: 30 },
-        { meal_type: MealType.fish, percentage: 20 },
-        { meal_type: MealType.carbohydrates, percentage: 25 },
-        { meal_type: MealType.vegetables, percentage: 25 },
-      ];
+      this.mealTimes = DEFAULT_MEAL_TIMES as any;
+      this.allTypeKeys = Object.values(MealType);
+      this.selectedMealTime = this.mealTimes[0]?.name || '';
+      this.perMealTimeDist = this.mealTimes.map(mt => ({
+        meal_time: mt.name,
+        types: this.buildDefaultTypes()
+      }));
     } finally {
       this.loading = false;
     }
+  }
+
+  buildDefaultTypes(): TypeDistribution[] {
+    const defaults = Object.values(MealType);
+    const pct = Math.floor(100 / this.allTypeKeys.length);
+    return this.allTypeKeys.map((key, i) => ({
+      meal_type: key,
+      percentage: i === 0 ? 100 - pct * (this.allTypeKeys.length - 1) : pct
+    }));
+  }
+
+  getMealTimeTotal(mtDist: MealTimeDistribution): number {
+    return mtDist.types.reduce((sum, d) => sum + d.percentage, 0);
+  }
+
+  allMealTimesValid(): boolean {
+    return this.perMealTimeDist.every(mt => this.getMealTimeTotal(mt) === 100);
   }
 
   previewTheme() {
@@ -270,7 +340,10 @@ export class ConfigComponent implements OnInit {
     this.saving = true;
     this.savedMsg = '';
     try {
-      await this.supabase.saveMenuConfig({ type_distribution: this.typeDistribution });
+      await this.supabase.saveMenuConfig({
+        type_distribution: this.perMealTimeDist[0]?.types || [],
+        per_meal_time_distribution: this.perMealTimeDist
+      });
       this.savedMsg = '¡Configuración guardada!';
       setTimeout(() => this.savedMsg = '', 3000);
     } catch (err) {
@@ -291,7 +364,21 @@ export class ConfigComponent implements OnInit {
     }
   }
 
-  getMealTypeColor(type: MealType): string { return MEAL_TYPE_COLORS[type] || '#94a3b8'; }
-  getMealTypeIcon(type: MealType): string { return MEAL_TYPE_ICONS[type] || 'restaurant'; }
-  getMealTypeLabel(type: MealType): string { return MEAL_TYPE_LABELS[type] || type; }
+  getTypeColor(type: string): string {
+    if (MEAL_TYPE_COLORS[type as MealType]) return MEAL_TYPE_COLORS[type as MealType];
+    const ct = this.customTypes.find(c => c.name === type);
+    return ct?.color || '#94a3b8';
+  }
+
+  getTypeIcon(type: string): string {
+    if (MEAL_TYPE_ICONS[type as MealType]) return MEAL_TYPE_ICONS[type as MealType];
+    const ct = this.customTypes.find(c => c.name === type);
+    return ct?.icon || 'restaurant';
+  }
+
+  getTypeLabel(type: string): string {
+    if (MEAL_TYPE_LABELS[type as MealType]) return MEAL_TYPE_LABELS[type as MealType];
+    const ct = this.customTypes.find(c => c.name === type);
+    return ct?.display_name || type;
+  }
 }
