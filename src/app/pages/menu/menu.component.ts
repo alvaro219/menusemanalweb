@@ -81,13 +81,26 @@ import {
             <h3 class="text-lg font-semibold text-white">{{ day.day }}</h3>
           </div>
 
+          <p class="text-xs text-slate-500 mb-2 flex items-center gap-1">
+            <span class="material-icons-round text-xs">swap_vert</span>
+            Arrastra para reordenar comidas del mismo tipo
+          </p>
+
           <div class="grid gap-3">
             <div *ngFor="let entry of day.meals; let mi = index"
-                 class="group flex items-center gap-3 p-3 rounded-xl bg-slate-800/40 hover:bg-slate-700/40 transition-all"
+                 class="group flex items-center gap-3 p-3 rounded-xl bg-slate-800/40 hover:bg-slate-700/40 transition-all cursor-grab active:cursor-grabbing"
+                 [ngClass]="{'ring-1 ring-sky-400/40': dragOverTarget?.day === di && dragOverTarget?.meal === mi}"
                  draggable="true"
                  (dragstart)="onDragStart($event, di, mi)"
-                 (dragover)="onDragOver($event)"
-                 (drop)="onDrop($event, di, mi)">
+                 (dragover)="onDragOver($event, di, mi)"
+                 (dragleave)="onDragLeave()"
+                 (drop)="onDrop($event, di, mi)"
+                 (dragend)="onDragLeave()">
+
+              <!-- Drag Handle -->
+              <div class="flex-shrink-0 text-slate-600 group-hover:text-slate-400 transition-colors">
+                <span class="material-icons-round text-base">drag_indicator</span>
+              </div>
               
               <!-- Meal Time Label -->
               <div class="flex-shrink-0 w-20">
@@ -124,7 +137,7 @@ import {
       </div>
 
       <!-- Meal Selector Modal -->
-      <div *ngIf="showMealSelector" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="showMealSelector = false">
+      <div *ngIf="showMealSelector" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="showMealSelector = false">
         <div class="glass-card p-6 w-full max-w-lg max-h-[80vh] flex flex-col animate-slide-up" (click)="$event.stopPropagation()">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-white">Seleccionar Comida</h3>
@@ -165,7 +178,7 @@ import {
       </div>
 
       <!-- Share Modal -->
-      <div *ngIf="showShareModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="showShareModal = false">
+      <div *ngIf="showShareModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="showShareModal = false">
         <div class="glass-card p-6 w-full max-w-md max-h-[85vh] flex flex-col animate-slide-up" (click)="$event.stopPropagation()">
           <div class="flex items-center justify-between mb-4 flex-shrink-0">
             <h3 class="text-lg font-semibold text-white">Compartir Menú</h3>
@@ -245,6 +258,7 @@ export class MenuComponent implements OnInit {
   shareMsg = '';
 
   private dragData: { dayIndex: number; mealIndex: number } | null = null;
+  dragOverTarget: { day: number; meal: number } | null = null;
 
   constructor(private supabase: SupabaseService) {}
 
@@ -293,7 +307,8 @@ export class MenuComponent implements OnInit {
     return dist.types[dist.types.length - 1].meal_type;
   }
 
-  /** Pick a random meal for a meal_time, respecting type distribution and avoiding used IDs */
+  /** Pick a random meal for a meal_time, respecting type distribution and avoiding used IDs.
+   *  Favorites are prioritized: if there are favorite meals matching the criteria, pick from those first. */
   private pickMeal(mealTimeName: string, usedIds: Set<string>): Meal | null {
     const available = this.meals.filter(m => m.meal_time === mealTimeName && !usedIds.has(m.id || ''));
     if (available.length === 0) return null;
@@ -302,10 +317,14 @@ export class MenuComponent implements OnInit {
     if (desiredType) {
       const typed = available.filter(m => m.type === desiredType || (m as any).custom_type_id === desiredType);
       if (typed.length > 0) {
+        const favs = typed.filter(m => m.is_favorite);
+        if (favs.length > 0) return favs[Math.floor(Math.random() * favs.length)];
         return typed[Math.floor(Math.random() * typed.length)];
       }
     }
-    // Fallback: pick any available meal
+    // Fallback: pick any available meal, favs first
+    const favs = available.filter(m => m.is_favorite);
+    if (favs.length > 0) return favs[Math.floor(Math.random() * favs.length)];
     return available[Math.floor(Math.random() * available.length)];
   }
 
@@ -409,11 +428,16 @@ export class MenuComponent implements OnInit {
     }
   }
 
-  onDragOver(event: DragEvent) {
+  onDragOver(event: DragEvent, dayIndex: number, mealIndex: number) {
     event.preventDefault();
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'move';
     }
+    this.dragOverTarget = { day: dayIndex, meal: mealIndex };
+  }
+
+  onDragLeave() {
+    this.dragOverTarget = null;
   }
 
   async onDrop(event: DragEvent, targetDayIndex: number, targetMealIndex: number) {
@@ -430,6 +454,7 @@ export class MenuComponent implements OnInit {
       await this.saveMenu();
     }
     this.dragData = null;
+    this.dragOverTarget = null;
   }
 
   // Share
