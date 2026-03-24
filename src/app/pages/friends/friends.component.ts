@@ -335,13 +335,20 @@ export class FriendsComponent implements OnInit {
     if (!meals || meals.length === 0) return;
     const ok = await this.confirmService.confirm({
       title: 'Importar comidas',
-      message: `¿Importar ${meals.length} comidas de ${sm.owner_name || 'tu amigo'}? Se añadirán a tu biblioteca.`,
+      message: `¿Importar ${meals.length} comidas de ${sm.owner_name || 'tu amigo'}? Se añadirán a tu biblioteca (se omitirán las que ya existan).`,
       confirmText: 'Importar'
     });
     if (!ok) return;
     try {
+      const existingMeals = await this.supabase.getMeals();
+      const existingNames = new Set(existingMeals.map(m => m.name.trim().toLowerCase()));
       let imported = 0;
+      let skipped = 0;
       for (const meal of meals) {
+        if (existingNames.has(meal.name.trim().toLowerCase())) {
+          skipped++;
+          continue;
+        }
         try {
           await this.supabase.addMeal({
             name: meal.name,
@@ -350,10 +357,19 @@ export class FriendsComponent implements OnInit {
             is_favorite: false,
             is_hidden: false
           });
+          existingNames.add(meal.name.trim().toLowerCase());
           imported++;
-        } catch { /* skip duplicates or errors */ }
+        } catch { /* skip errors */ }
       }
       this.importedMenus[sm.id!] = true;
+      if (skipped > 0) {
+        await this.confirmService.confirm({
+          title: 'Importación completada',
+          message: `Se importaron ${imported} comida${imported !== 1 ? 's' : ''}. Se omitieron ${skipped} por ya existir.`,
+          confirmText: 'OK',
+          showCancel: false
+        });
+      }
       setTimeout(() => delete this.importedMenus[sm.id!], 3000);
     } catch (err) {
       console.error('Error importing meals:', err);

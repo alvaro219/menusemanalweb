@@ -9,14 +9,16 @@ export class ConfirmModalService {
   message = '';
   confirmText = 'Aceptar';
   danger = false;
+  showCancel = true;
 
   private resolvePromise: ((value: boolean) => void) | null = null;
 
-  confirm(options: { title: string; message: string; confirmText?: string; danger?: boolean }): Promise<boolean> {
+  confirm(options: { title: string; message: string; confirmText?: string; danger?: boolean; showCancel?: boolean }): Promise<boolean> {
     this.title = options.title;
     this.message = options.message;
     this.confirmText = options.confirmText || 'Aceptar';
     this.danger = options.danger ?? false;
+    this.showCancel = options.showCancel ?? true;
     this.visible = true;
 
     return new Promise<boolean>((resolve) => {
