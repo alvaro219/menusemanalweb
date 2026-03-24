@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
+import { ConfirmModalService } from '../../components/confirm-modal/confirm-modal.service';
 import { CustomMealType } from '../../models/meal.model';
 
 @Component({
@@ -152,7 +153,7 @@ export class MealTypesComponent implements OnInit {
     'brunch_dining', 'dinner_dining', 'fastfood', 'cake'
   ];
 
-  constructor(private supabase: SupabaseService) {}
+  constructor(private supabase: SupabaseService, private confirmService: ConfirmModalService) {}
 
   async ngOnInit() {
     await this.loadData();
@@ -224,7 +225,13 @@ export class MealTypesComponent implements OnInit {
   }
 
   async deleteType(ct: CustomMealType) {
-    if (!confirm(`¿Eliminar "${ct.display_name}"?`)) return;
+    const ok = await this.confirmService.confirm({
+      title: 'Eliminar tipo de comida',
+      message: `¿Eliminar "${ct.display_name}"?`,
+      confirmText: 'Eliminar',
+      danger: true
+    });
+    if (!ok) return;
     try {
       await this.supabase.deleteCustomMealType(ct.id!);
       this.customTypes = this.customTypes.filter(t => t.id !== ct.id);

@@ -251,12 +251,37 @@ export class SupabaseService {
       .limit(1)
       .single();
     if (userError || !users) throw new Error('Usuario no encontrado');
-    
+
+    const targetId = users.id;
+    const myId = this.currentUser?.id;
+
+    // Check if already friends or pending
+    const { data: existing } = await this.supabase
+      .from('friendships')
+      .select('id, status, sender_id, receiver_id')
+      .or(`and(sender_id.eq.${myId},receiver_id.eq.${targetId}),and(sender_id.eq.${targetId},receiver_id.eq.${myId})`);
+
+    if (existing && existing.length > 0) {
+      const accepted = existing.find((r: any) => r.status === 'accepted');
+      if (accepted) throw new Error('Ya sois amigos');
+
+      // If they sent us a pending request, auto-accept it
+      const theirPending = existing.find((r: any) => r.status === 'pending' && r.sender_id === targetId);
+      if (theirPending) {
+        await this.respondToFriendRequest(theirPending.id, 'accepted');
+        return theirPending as FriendRequest;
+      }
+
+      // If we already sent a pending request
+      const myPending = existing.find((r: any) => r.status === 'pending' && r.sender_id === myId);
+      if (myPending) throw new Error('Ya has enviado una solicitud a este usuario');
+    }
+
     const { data, error } = await this.supabase
       .from('friendships')
       .insert({
-        sender_id: this.currentUser?.id,
-        receiver_id: users.id,
+        sender_id: myId,
+        receiver_id: targetId,
         status: 'pending'
       })
       .select()
@@ -359,6 +384,18 @@ export class SupabaseService {
 
   async deleteSharedMenu(id: string): Promise<void> {
     const { error } = await this.supabase.from('shared_menus').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  // Share Meals Library
+  async shareMealsWithFriend(friendId: string, meals: Meal[]): Promise<void> {
+    const { error } = await this.supabase
+      .from('shared_menus')
+      .insert({
+        owner_id: this.currentUser?.id,
+        shared_with_id: friendId,
+        menu_data: { type: 'meals_library', meals }
+      });
     if (error) throw error;
   }
 

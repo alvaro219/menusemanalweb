@@ -2,8 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
+import { ConfirmModalService } from '../../components/confirm-modal/confirm-modal.service';
 import {
-  Meal, MealType, MealTime, DEFAULT_MEAL_TIMES,
+  Meal, MealType, MealTime, CustomMealType, UserProfile, DEFAULT_MEAL_TIMES,
   MEAL_TYPE_COLORS, MEAL_TYPE_ICONS, MEAL_TYPE_LABELS
 } from '../../models/meal.model';
 
@@ -21,10 +22,16 @@ import {
           </h1>
           <p class="text-slate-400 text-sm mt-1">{{ meals.length }} comidas registradas</p>
         </div>
-        <button (click)="openAddModal()" class="btn-primary flex items-center gap-2 text-sm">
-          <span class="material-icons-round text-lg">add</span>
-          Añadir Comida
-        </button>
+        <div class="flex gap-2">
+          <button (click)="openShareMealsModal()" class="btn-secondary flex items-center gap-2 text-sm">
+            <span class="material-icons-round text-lg">share</span>
+            Compartir
+          </button>
+          <button (click)="openAddModal()" class="btn-primary flex items-center gap-2 text-sm">
+            <span class="material-icons-round text-lg">add</span>
+            Añadir Comida
+          </button>
+        </div>
       </div>
 
       <!-- Filters -->
@@ -34,12 +41,12 @@ import {
                 class="px-3 py-1.5 rounded-full text-xs font-medium border transition-all">
           Todos
         </button>
-        <button *ngFor="let type of mealTypes" (click)="filterType = type"
+        <button *ngFor="let type of allTypeKeys" (click)="filterType = type"
                 [class]="filterType === type ? 'text-sky-300 border-sky-500/30' : 'text-slate-400 border-slate-700/50'"
-                [style.background]="filterType === type ? getMealTypeColor(type) + '20' : ''"
+                [style.background]="filterType === type ? getTypeColor(type) + '20' : ''"
                 class="px-3 py-1.5 rounded-full text-xs font-medium border transition-all flex items-center gap-1.5 bg-slate-800/40">
-          <span class="material-icons-round text-xs" [style.color]="getMealTypeColor(type)">{{ getMealTypeIcon(type) }}</span>
-          {{ getMealTypeLabel(type) }}
+          <span class="material-icons-round text-xs" [style.color]="getTypeColor(type)">{{ getTypeIcon(type) }}</span>
+          {{ getTypeLabel(type) }}
         </button>
         <button (click)="showFavoritesOnly = !showFavoritesOnly"
                 [class]="showFavoritesOnly ? 'bg-pink-500/20 text-pink-300 border-pink-500/30' : 'bg-slate-800/40 text-slate-400 border-slate-700/50'"
@@ -59,9 +66,9 @@ import {
              [style.animation-delay]="i * 30 + 'ms'"
              [class.opacity-50]="meal.is_hidden">
           <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-               [style.background]="getMealTypeColor(meal.type) + '15'">
-            <span class="material-icons-round text-lg" [style.color]="getMealTypeColor(meal.type)">
-              {{ getMealTypeIcon(meal.type) }}
+               [style.background]="getTypeColor(meal.type) + '15'">
+            <span class="material-icons-round text-lg" [style.color]="getTypeColor(meal.type)">
+              {{ getTypeIcon(meal.type) }}
             </span>
           </div>
 
@@ -73,8 +80,8 @@ import {
             </div>
             <div class="flex items-center gap-2 mt-0.5">
               <span class="text-xs text-slate-500">{{ getMealTimeDisplay(meal.meal_time) }}</span>
-              <span class="text-xs px-1.5 py-0.5 rounded-full" [style.background]="getMealTypeColor(meal.type) + '15'" [style.color]="getMealTypeColor(meal.type)">
-                {{ getMealTypeLabel(meal.type) }}
+              <span class="text-xs px-1.5 py-0.5 rounded-full" [style.background]="getTypeColor(meal.type) + '15'" [style.color]="getTypeColor(meal.type)">
+                {{ getTypeLabel(meal.type) }}
               </span>
             </div>
           </div>
@@ -104,7 +111,7 @@ import {
 
       <!-- Add/Edit Modal -->
       <div *ngIf="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="showModal = false">
-        <div class="glass-card p-6 w-full max-w-md animate-slide-up" (click)="$event.stopPropagation()">
+        <div class="glass-card p-6 w-full max-w-md animate-slide-up max-h-[85vh] overflow-y-auto" (click)="$event.stopPropagation()">
           <h3 class="text-lg font-semibold text-white mb-4">{{ editingMeal ? 'Editar' : 'Añadir' }} Comida</h3>
 
           <div class="space-y-4">
@@ -121,11 +128,11 @@ import {
             <div>
               <label class="block text-sm font-medium text-slate-300 mb-1.5">Tipo</label>
               <div class="grid grid-cols-2 gap-2">
-                <button *ngFor="let type of mealTypes" (click)="formType = type"
+                <button *ngFor="let type of allTypeKeys" (click)="formType = type"
                         [class]="formType === type ? 'border-sky-500/50 bg-sky-500/10' : 'border-slate-700/50 bg-slate-800/40'"
                         class="flex items-center gap-2 p-3 rounded-xl border transition-all">
-                  <span class="material-icons-round text-sm" [style.color]="getMealTypeColor(type)">{{ getMealTypeIcon(type) }}</span>
-                  <span class="text-sm text-slate-300">{{ getMealTypeLabel(type) }}</span>
+                  <span class="material-icons-round text-sm" [style.color]="getTypeColor(type)">{{ getTypeIcon(type) }}</span>
+                  <span class="text-sm text-slate-300">{{ getTypeLabel(type) }}</span>
                 </button>
               </div>
             </div>
@@ -140,6 +147,45 @@ import {
         </div>
       </div>
 
+      <!-- Share Meals Modal -->
+      <div *ngIf="showShareModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="showShareModal = false">
+        <div class="glass-card p-6 w-full max-w-md max-h-[85vh] flex flex-col animate-slide-up" (click)="$event.stopPropagation()">
+          <div class="flex items-center justify-between mb-4 flex-shrink-0">
+            <h3 class="text-lg font-semibold text-white">Compartir Biblioteca de Comidas</h3>
+            <button (click)="showShareModal = false" class="p-1 rounded-lg hover:bg-white/5 text-slate-400">
+              <span class="material-icons-round">close</span>
+            </button>
+          </div>
+          <p class="text-sm text-slate-400 mb-3 flex-shrink-0">Se compartirán {{ meals.length }} comidas. Selecciona amigos:</p>
+          <div *ngIf="shareFriends.length > 0" class="flex flex-col flex-1 min-h-0">
+            <div class="space-y-2 overflow-y-auto flex-1 pr-1">
+              <button *ngFor="let friend of shareFriends" (click)="toggleShareFriend(friend.id)"
+                      class="w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left"
+                      [class]="selectedShareFriends[friend.id] ? 'bg-sky-500/15 border border-sky-500/30' : 'hover:bg-white/5 border border-transparent'">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-sky-500 to-violet-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                  {{ (friend.display_name || friend.email).charAt(0).toUpperCase() }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm text-slate-200">{{ friend.display_name || friend.email }}</p>
+                </div>
+                <span *ngIf="selectedShareFriends[friend.id]" class="material-icons-round text-sky-400 text-lg flex-shrink-0">check_circle</span>
+                <span *ngIf="!selectedShareFriends[friend.id]" class="material-icons-round text-slate-600 text-lg flex-shrink-0">radio_button_unchecked</span>
+              </button>
+            </div>
+            <div class="flex-shrink-0 pt-3 mt-2 border-t border-slate-700/50">
+              <button (click)="shareMealsWithSelected()" [disabled]="selectedShareFriendsCount === 0 || sharingMeals"
+                      class="btn-primary w-full flex items-center justify-center gap-2">
+                <span *ngIf="sharingMeals" class="material-icons-round animate-spin text-lg">refresh</span>
+                <span *ngIf="!sharingMeals" class="material-icons-round text-lg">send</span>
+                {{ sharingMeals ? 'Enviando...' : 'Enviar a ' + selectedShareFriendsCount + ' amigo' + (selectedShareFriendsCount !== 1 ? 's' : '') }}
+              </button>
+              <p *ngIf="shareMealsMsg" class="text-center text-green-400 text-sm mt-2">{{ shareMealsMsg }}</p>
+            </div>
+          </div>
+          <p *ngIf="shareFriends.length === 0" class="text-sm text-slate-500 text-center py-4">No tienes amigos aún.</p>
+        </div>
+      </div>
+
       <!-- Loading -->
       <div *ngIf="loading" class="flex items-center justify-center py-20">
         <span class="material-icons-round text-4xl text-sky-400 animate-spin">refresh</span>
@@ -150,19 +196,27 @@ import {
 export class MealsComponent implements OnInit {
   meals: Meal[] = [];
   mealTimes: MealTime[] = [];
+  customTypes: CustomMealType[] = [];
   mealTypes = Object.values(MealType);
+  allTypeKeys: string[] = [];
   loading = true;
   searchQuery = '';
-  filterType: MealType | null = null;
+  filterType: string | null = null;
   showFavoritesOnly = false;
   showModal = false;
   editingMeal: Meal | null = null;
 
   formName = '';
   formMealTime = 'comida';
-  formType: MealType = MealType.vegetables;
+  formType: string = MealType.vegetables;
 
-  constructor(private supabase: SupabaseService) {}
+  showShareModal = false;
+  shareFriends: UserProfile[] = [];
+  selectedShareFriends: Record<string, boolean> = {};
+  sharingMeals = false;
+  shareMealsMsg = '';
+
+  constructor(private supabase: SupabaseService, private confirmService: ConfirmModalService) {}
 
   async ngOnInit() {
     await this.loadData();
@@ -171,12 +225,18 @@ export class MealsComponent implements OnInit {
   async loadData() {
     this.loading = true;
     try {
-      const [meals, mealTimes] = await Promise.all([
+      const [meals, mealTimes, customTypes] = await Promise.all([
         this.supabase.getMeals(),
-        this.supabase.getMealTimes()
+        this.supabase.getMealTimes(),
+        this.supabase.getCustomMealTypes()
       ]);
       this.meals = meals;
       this.mealTimes = mealTimes.length > 0 ? mealTimes : DEFAULT_MEAL_TIMES as any;
+      this.customTypes = customTypes.filter(ct => ct.is_active);
+      this.allTypeKeys = [
+        ...Object.values(MealType),
+        ...this.customTypes.map(ct => ct.name)
+      ];
     } catch (err) {
       console.error('Error loading meals:', err);
     } finally {
@@ -218,7 +278,7 @@ export class MealsComponent implements OnInit {
         const updated = await this.supabase.updateMeal(this.editingMeal.id, {
           name: this.formName.trim(),
           meal_time: this.formMealTime,
-          type: this.formType
+          type: this.formType as MealType
         });
         const idx = this.meals.findIndex(m => m.id === this.editingMeal!.id);
         if (idx >= 0) this.meals[idx] = updated;
@@ -226,7 +286,7 @@ export class MealsComponent implements OnInit {
         const newMeal = await this.supabase.addMeal({
           name: this.formName.trim(),
           meal_time: this.formMealTime,
-          type: this.formType,
+          type: this.formType as MealType,
           is_favorite: false,
           is_hidden: false
         });
@@ -259,7 +319,13 @@ export class MealsComponent implements OnInit {
   }
 
   async deleteMeal(meal: Meal) {
-    if (!confirm(`¿Eliminar "${meal.name}"?`)) return;
+    const ok = await this.confirmService.confirm({
+      title: 'Eliminar comida',
+      message: `¿Eliminar "${meal.name}"?`,
+      confirmText: 'Eliminar',
+      danger: true
+    });
+    if (!ok) return;
     try {
       await this.supabase.deleteMeal(meal.id!);
       this.meals = this.meals.filter(m => m.id !== meal.id);
@@ -273,7 +339,56 @@ export class MealsComponent implements OnInit {
     return mt ? `${mt.emoji} ${mt.display_name}` : timeName;
   }
 
-  getMealTypeColor(type: MealType): string { return MEAL_TYPE_COLORS[type] || '#94a3b8'; }
-  getMealTypeIcon(type: MealType): string { return MEAL_TYPE_ICONS[type] || 'restaurant'; }
-  getMealTypeLabel(type: MealType): string { return MEAL_TYPE_LABELS[type] || type; }
+  getTypeColor(type: string): string {
+    if (MEAL_TYPE_COLORS[type as MealType]) return MEAL_TYPE_COLORS[type as MealType];
+    const ct = this.customTypes.find(c => c.name === type);
+    return ct?.color || '#94a3b8';
+  }
+
+  getTypeIcon(type: string): string {
+    if (MEAL_TYPE_ICONS[type as MealType]) return MEAL_TYPE_ICONS[type as MealType];
+    const ct = this.customTypes.find(c => c.name === type);
+    return ct?.icon || 'restaurant';
+  }
+
+  getTypeLabel(type: string): string {
+    if (MEAL_TYPE_LABELS[type as MealType]) return MEAL_TYPE_LABELS[type as MealType];
+    const ct = this.customTypes.find(c => c.name === type);
+    return ct?.display_name || type;
+  }
+
+  async openShareMealsModal() {
+    this.showShareModal = true;
+    this.selectedShareFriends = {};
+    this.shareMealsMsg = '';
+    try {
+      this.shareFriends = await this.supabase.getFriends();
+    } catch { this.shareFriends = []; }
+  }
+
+  toggleShareFriend(id: string) {
+    this.selectedShareFriends[id] = !this.selectedShareFriends[id];
+  }
+
+  get selectedShareFriendsCount(): number {
+    return Object.values(this.selectedShareFriends).filter(v => v).length;
+  }
+
+  async shareMealsWithSelected() {
+    if (this.meals.length === 0 || this.selectedShareFriendsCount === 0) return;
+    this.sharingMeals = true;
+    this.shareMealsMsg = '';
+    try {
+      const ids = Object.entries(this.selectedShareFriends).filter(([_, v]) => v).map(([id]) => id);
+      for (const friendId of ids) {
+        await this.supabase.shareMealsWithFriend(friendId, this.meals);
+      }
+      this.shareMealsMsg = `¡Comidas enviadas a ${ids.length} amigo${ids.length !== 1 ? 's' : ''}!`;
+      this.selectedShareFriends = {};
+    } catch (err) {
+      console.error('Error sharing meals:', err);
+    } finally {
+      this.sharingMeals = false;
+    }
+  }
 }

@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
-import { FriendRequest, UserProfile, SharedMenu, WeeklyMenu, MEAL_TYPE_COLORS, MEAL_TYPE_ICONS, MealType } from '../../models/meal.model';
+import { ConfirmModalService } from '../../components/confirm-modal/confirm-modal.service';
+import { FriendRequest, UserProfile, SharedMenu, Meal, WeeklyMenu, MEAL_TYPE_COLORS, MEAL_TYPE_ICONS, MealType } from '../../models/meal.model';
 
 @Component({
   selector: 'app-friends',
@@ -137,20 +138,31 @@ import { FriendRequest, UserProfile, SharedMenu, WeeklyMenu, MEAL_TYPE_COLORS, M
              class="glass-card p-4 !rounded-xl animate-slide-up"
              [style.animation-delay]="i * 50 + 'ms'">
           <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                 [class]="isSharedMeals(sm) ? 'bg-gradient-to-br from-amber-500 to-orange-500' : 'bg-gradient-to-br from-violet-500 to-pink-500'">
               {{ (sm.owner_name || sm.owner_email || '?').charAt(0).toUpperCase() }}
             </div>
             <div class="flex-1">
               <p class="text-sm font-medium text-slate-200">{{ sm.owner_name || 'Sin nombre' }}</p>
-              <p class="text-xs text-slate-500">{{ sm.shared_at | date:'dd/MM/yyyy HH:mm' }}</p>
+              <div class="flex items-center gap-2">
+                <p class="text-xs text-slate-500">{{ sm.shared_at | date:'dd/MM/yyyy HH:mm' }}</p>
+                <span *ngIf="isSharedMeals(sm)" class="text-[10px] bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded">Comidas</span>
+                <span *ngIf="!isSharedMeals(sm)" class="text-[10px] bg-violet-500/15 text-violet-400 px-1.5 py-0.5 rounded">Menú</span>
+              </div>
             </div>
-            <button (click)="deleteSharedMenu(sm)" class="p-2 rounded-lg hover:bg-white/5 text-slate-500 hover:text-red-400 transition-colors">
+            <button *ngIf="isSharedMeals(sm)" (click)="importSharedMeals(sm)" class="p-2 rounded-lg hover:bg-white/5 text-slate-500 hover:text-green-400 transition-colors" title="Importar comidas">
+              <span class="material-icons-round text-base">download</span>
+            </button>
+            <button *ngIf="!isSharedMeals(sm)" (click)="importSharedMenu(sm)" class="p-2 rounded-lg hover:bg-white/5 text-slate-500 hover:text-green-400 transition-colors" title="Importar menú">
+              <span class="material-icons-round text-base">download</span>
+            </button>
+            <button (click)="deleteSharedMenu(sm)" class="p-2 rounded-lg hover:bg-white/5 text-slate-500 hover:text-red-400 transition-colors" title="Eliminar">
               <span class="material-icons-round text-base">delete_outline</span>
             </button>
           </div>
 
           <!-- Shared menu preview -->
-          <div *ngIf="sm.menu_data?.days" class="space-y-2">
+          <div *ngIf="!isSharedMeals(sm) && sm.menu_data?.days" class="space-y-2">
             <div *ngFor="let day of sm.menu_data.days" class="p-2 rounded-lg bg-slate-800/30">
               <p class="text-xs font-medium text-sky-300 mb-1">{{ day.day }}</p>
               <div *ngFor="let entry of day.meals" class="flex items-center gap-2 text-xs text-slate-400">
@@ -161,10 +173,23 @@ import { FriendRequest, UserProfile, SharedMenu, WeeklyMenu, MEAL_TYPE_COLORS, M
               </div>
             </div>
           </div>
+
+          <!-- Shared meals preview -->
+          <div *ngIf="isSharedMeals(sm)" class="space-y-1">
+            <p class="text-xs text-slate-400">{{ sm.menu_data.meals?.length || 0 }} comidas compartidas</p>
+            <div class="flex flex-wrap gap-1 mt-1">
+              <span *ngFor="let meal of (sm.menu_data.meals || []).slice(0, 8)" class="text-[10px] bg-slate-800/40 text-slate-400 px-2 py-0.5 rounded-full">
+                {{ meal.name }}
+              </span>
+              <span *ngIf="(sm.menu_data.meals?.length || 0) > 8" class="text-[10px] text-slate-500">+{{ sm.menu_data.meals.length - 8 }} más</span>
+            </div>
+          </div>
+
+          <p *ngIf="importedMenus[sm.id!]" class="text-green-400 text-xs mt-2">{{ isSharedMeals(sm) ? '¡Comidas importadas correctamente!' : '¡Menú importado correctamente!' }}</p>
         </div>
 
         <p *ngIf="sharedMenus.length === 0 && !loading" class="text-center text-slate-500 py-12">
-          No has recibido menús compartidos
+          No has recibido contenido compartido
         </p>
       </div>
 
@@ -184,8 +209,9 @@ export class FriendsComponent implements OnInit {
   sendingRequest = false;
   requestMsg = '';
   requestError = false;
+  importedMenus: Record<string, boolean> = {};
 
-  constructor(private supabase: SupabaseService) {}
+  constructor(private supabase: SupabaseService, private confirmService: ConfirmModalService) {}
 
   get pendingRequests(): FriendRequest[] {
     return this.allRequests.filter(r => r.status === 'pending' && r.receiver_id === this.supabase.currentUser?.id);
@@ -207,7 +233,14 @@ export class FriendsComponent implements OnInit {
         this.supabase.getFriendRequests(),
         this.supabase.getSharedMenus()
       ]);
-      this.friends = friendsResult.status === 'fulfilled' ? friendsResult.value : [];
+      const rawFriends = friendsResult.status === 'fulfilled' ? friendsResult.value : [];
+      // Deduplicate friends by id (fix #8)
+      const seen = new Set<string>();
+      this.friends = rawFriends.filter(f => {
+        if (seen.has(f.id)) return false;
+        seen.add(f.id);
+        return true;
+      });
       this.allRequests = requestsResult.status === 'fulfilled' ? requestsResult.value : [];
       this.sharedMenus = sharedResult.status === 'fulfilled' ? sharedResult.value : [];
       if (friendsResult.status === 'rejected') console.error('Error loading friends:', friendsResult.reason);
@@ -246,7 +279,13 @@ export class FriendsComponent implements OnInit {
   }
 
   async removeFriend(friend: UserProfile) {
-    if (!confirm(`¿Eliminar a "${friend.display_name || friend.email}" de tus amigos?`)) return;
+    const ok = await this.confirmService.confirm({
+      title: 'Eliminar amigo',
+      message: `¿Eliminar a "${friend.display_name || friend.email}" de tus amigos?`,
+      confirmText: 'Eliminar',
+      danger: true
+    });
+    if (!ok) return;
     try {
       await this.supabase.removeFriend(friend.id);
       await this.loadData();
@@ -255,12 +294,69 @@ export class FriendsComponent implements OnInit {
     }
   }
 
+  async importSharedMenu(sm: SharedMenu) {
+    const ok = await this.confirmService.confirm({
+      title: 'Importar menú',
+      message: `¿Importar el menú de ${sm.owner_name || 'tu amigo'}? Esto reemplazará tu menú actual.`,
+      confirmText: 'Importar'
+    });
+    if (!ok) return;
+    try {
+      await this.supabase.saveWeeklyMenu({ days: sm.menu_data.days });
+      this.importedMenus[sm.id!] = true;
+      setTimeout(() => delete this.importedMenus[sm.id!], 3000);
+    } catch (err) {
+      console.error('Error importing menu:', err);
+    }
+  }
+
   async deleteSharedMenu(sm: SharedMenu) {
+    const ok = await this.confirmService.confirm({
+      title: 'Eliminar menú compartido',
+      message: '¿Eliminar este menú compartido?',
+      confirmText: 'Eliminar',
+      danger: true
+    });
+    if (!ok) return;
     try {
       await this.supabase.deleteSharedMenu(sm.id!);
       this.sharedMenus = this.sharedMenus.filter(s => s.id !== sm.id);
     } catch (err) {
       console.error('Error deleting shared menu:', err);
+    }
+  }
+
+  isSharedMeals(sm: SharedMenu): boolean {
+    return (sm.menu_data as any)?.type === 'meals_library';
+  }
+
+  async importSharedMeals(sm: SharedMenu) {
+    const meals = (sm.menu_data as any)?.meals as Meal[];
+    if (!meals || meals.length === 0) return;
+    const ok = await this.confirmService.confirm({
+      title: 'Importar comidas',
+      message: `¿Importar ${meals.length} comidas de ${sm.owner_name || 'tu amigo'}? Se añadirán a tu biblioteca.`,
+      confirmText: 'Importar'
+    });
+    if (!ok) return;
+    try {
+      let imported = 0;
+      for (const meal of meals) {
+        try {
+          await this.supabase.addMeal({
+            name: meal.name,
+            type: meal.type,
+            meal_time: meal.meal_time,
+            is_favorite: false,
+            is_hidden: false
+          });
+          imported++;
+        } catch { /* skip duplicates or errors */ }
+      }
+      this.importedMenus[sm.id!] = true;
+      setTimeout(() => delete this.importedMenus[sm.id!], 3000);
+    } catch (err) {
+      console.error('Error importing meals:', err);
     }
   }
 

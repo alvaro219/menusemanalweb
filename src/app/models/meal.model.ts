@@ -85,7 +85,7 @@ export interface SharedMenu {
   id?: string;
   owner_id: string;
   shared_with_id: string;
-  menu_data: WeeklyMenu;
+  menu_data: any;
   shared_at?: string;
   owner_name?: string;
   owner_email?: string;

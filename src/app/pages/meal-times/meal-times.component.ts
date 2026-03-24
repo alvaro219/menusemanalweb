@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
+import { ConfirmModalService } from '../../components/confirm-modal/confirm-modal.service';
 import { MealTime } from '../../models/meal.model';
 
 @Component({
@@ -114,7 +115,7 @@ export class MealTimesComponent implements OnInit {
 
   private dragIndex: number | null = null;
 
-  constructor(private supabase: SupabaseService) {}
+  constructor(private supabase: SupabaseService, private confirmService: ConfirmModalService) {}
 
   async ngOnInit() {
     await this.loadData();
@@ -173,7 +174,13 @@ export class MealTimesComponent implements OnInit {
   }
 
   async deleteMealTime(mt: MealTime) {
-    if (!confirm(`¿Eliminar "${mt.display_name}"?`)) return;
+    const ok = await this.confirmService.confirm({
+      title: 'Eliminar tiempo de comida',
+      message: `¿Eliminar "${mt.display_name}"?`,
+      confirmText: 'Eliminar',
+      danger: true
+    });
+    if (!ok) return;
     try {
       await this.supabase.deleteMealTime(mt.id!);
       this.mealTimes = this.mealTimes.filter(t => t.id !== mt.id);

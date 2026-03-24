@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
+import { ThemeService, ThemeColors, DEFAULT_THEME } from '../../services/theme.service';
 import { MenuConfig, MealType, TypeDistribution, MEAL_TYPE_COLORS, MEAL_TYPE_ICONS, MEAL_TYPE_LABELS } from '../../models/meal.model';
 
 @Component({
@@ -15,7 +16,78 @@ import { MenuConfig, MealType, TypeDistribution, MEAL_TYPE_COLORS, MEAL_TYPE_ICO
           <span class="material-icons-round text-sky-400">settings</span>
           Configuración
         </h1>
-        <p class="text-slate-400 text-sm mt-1">Personaliza la distribución de tipos</p>
+        <p class="text-slate-400 text-sm mt-1">Personaliza tu experiencia</p>
+      </div>
+
+      <!-- Theme Colors -->
+      <div class="glass-card p-6 !rounded-xl">
+        <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <span class="material-icons-round text-base">palette</span>
+          Colores del Tema
+        </h2>
+        <p class="text-sm text-slate-400 mb-6">Personaliza los colores de tu página</p>
+
+        <div class="space-y-5">
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Color primario</label>
+            <div class="flex flex-wrap gap-2">
+              <button *ngFor="let c of primaryColors" (click)="themeColors.primary = c; previewTheme()"
+                      [class]="themeColors.primary === c ? 'ring-2 ring-white scale-110' : ''"
+                      class="w-8 h-8 rounded-full transition-all" [style.background]="c">
+              </button>
+              <label class="w-8 h-8 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center cursor-pointer overflow-hidden relative" title="Color personalizado">
+                <span class="material-icons-round text-slate-500 text-sm">add</span>
+                <input type="color" [(ngModel)]="themeColors.primary" (input)="previewTheme()" class="absolute inset-0 opacity-0 cursor-pointer">
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Color de acento</label>
+            <div class="flex flex-wrap gap-2">
+              <button *ngFor="let c of accentColors" (click)="themeColors.accent = c; previewTheme()"
+                      [class]="themeColors.accent === c ? 'ring-2 ring-white scale-110' : ''"
+                      class="w-8 h-8 rounded-full transition-all" [style.background]="c">
+              </button>
+              <label class="w-8 h-8 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center cursor-pointer overflow-hidden relative" title="Color personalizado">
+                <span class="material-icons-round text-slate-500 text-sm">add</span>
+                <input type="color" [(ngModel)]="themeColors.accent" (input)="previewTheme()" class="absolute inset-0 opacity-0 cursor-pointer">
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Fondo</label>
+            <div class="flex flex-wrap gap-2">
+              <button *ngFor="let bg of bgPresets; let i = index" (click)="applyBgPreset(bg)"
+                      [class]="isBgPresetActive(bg) ? 'ring-2 ring-white scale-105' : ''"
+                      class="w-16 h-8 rounded-lg transition-all"
+                      [style.background]="'linear-gradient(135deg, ' + bg.bgStart + ', ' + bg.bgMid + ', ' + bg.bgEnd + ')'">
+              </button>
+            </div>
+          </div>
+
+          <!-- Preview -->
+          <div class="p-4 rounded-xl border border-slate-700/50">
+            <p class="text-xs text-slate-500 mb-2">Vista previa</p>
+            <div class="flex items-center gap-3">
+              <div class="h-8 flex-1 rounded-lg" [style.background]="'linear-gradient(135deg, ' + themeColors.primary + ', ' + themeColors.accent + ')'"></div>
+              <div class="h-8 w-16 rounded-lg" [style.background]="'linear-gradient(135deg, ' + themeColors.bgStart + ', ' + themeColors.bgMid + ')'"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3 mt-6">
+          <button (click)="resetTheme()" class="btn-secondary flex-1 flex items-center justify-center gap-2 text-sm">
+            <span class="material-icons-round text-base">refresh</span>
+            Resetear
+          </button>
+          <button (click)="saveTheme()" [disabled]="savingTheme" class="btn-primary flex-1 flex items-center justify-center gap-2 text-sm">
+            <span *ngIf="savingTheme" class="material-icons-round animate-spin text-base">refresh</span>
+            {{ savingTheme ? 'Guardando...' : 'Guardar Colores' }}
+          </button>
+        </div>
+        <p *ngIf="themeMsg" class="text-center text-green-400 text-sm mt-2">{{ themeMsg }}</p>
       </div>
 
       <!-- Type Distribution -->
@@ -99,8 +171,32 @@ export class ConfigComponent implements OnInit {
   savedMsg = '';
   displayName = '';
   profileMsg = '';
+  themeColors: ThemeColors = { ...DEFAULT_THEME };
+  savingTheme = false;
+  themeMsg = '';
 
-  constructor(private supabase: SupabaseService) {}
+  primaryColors = [
+    '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7',
+    '#ec4899', '#f43f5e', '#ef4444', '#f97316', '#22c55e',
+    '#14b8a6', '#06b6d4'
+  ];
+
+  accentColors = [
+    '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e',
+    '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6',
+    '#6366f1', '#0ea5e9'
+  ];
+
+  bgPresets: Partial<ThemeColors>[] = [
+    { bgStart: '#0f172a', bgMid: '#1e293b', bgEnd: '#0f172a' },
+    { bgStart: '#0c0a09', bgMid: '#1c1917', bgEnd: '#0c0a09' },
+    { bgStart: '#0f172a', bgMid: '#172554', bgEnd: '#0f172a' },
+    { bgStart: '#0a0a0a', bgMid: '#171717', bgEnd: '#0a0a0a' },
+    { bgStart: '#0f0f23', bgMid: '#1a1a3e', bgEnd: '#0f0f23' },
+    { bgStart: '#0d1117', bgMid: '#161b22', bgEnd: '#0d1117' },
+  ];
+
+  constructor(private supabase: SupabaseService, private themeService: ThemeService) {}
 
   get totalPercentage(): number {
     return this.typeDistribution.reduce((sum, d) => sum + d.percentage, 0);
@@ -109,6 +205,7 @@ export class ConfigComponent implements OnInit {
   async ngOnInit() {
     this.loading = true;
     try {
+      this.themeColors = this.themeService.getTheme();
       const config = await this.supabase.getMenuConfig();
       if (config?.type_distribution) {
         this.typeDistribution = config.type_distribution;
@@ -133,6 +230,40 @@ export class ConfigComponent implements OnInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  previewTheme() {
+    this.themeService.saveTheme(this.themeColors);
+  }
+
+  applyBgPreset(bg: Partial<ThemeColors>) {
+    this.themeColors.bgStart = bg.bgStart!;
+    this.themeColors.bgMid = bg.bgMid!;
+    this.themeColors.bgEnd = bg.bgEnd!;
+    this.previewTheme();
+  }
+
+  isBgPresetActive(bg: Partial<ThemeColors>): boolean {
+    return this.themeColors.bgStart === bg.bgStart && this.themeColors.bgMid === bg.bgMid && this.themeColors.bgEnd === bg.bgEnd;
+  }
+
+  async saveTheme() {
+    this.savingTheme = true;
+    this.themeMsg = '';
+    try {
+      await this.themeService.saveTheme(this.themeColors);
+      this.themeMsg = '¡Colores guardados!';
+      setTimeout(() => this.themeMsg = '', 3000);
+    } catch (err) {
+      console.error('Error saving theme:', err);
+    } finally {
+      this.savingTheme = false;
+    }
+  }
+
+  resetTheme() {
+    this.themeColors = { ...DEFAULT_THEME };
+    this.themeService.saveTheme(this.themeColors);
   }
 
   async saveConfig() {

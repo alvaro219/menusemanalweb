@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { SupabaseService } from '../../services/supabase.service';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-layout',
@@ -76,12 +77,13 @@ import { SupabaseService } from '../../services/supabase.service';
 export class LayoutComponent implements OnInit {
   userEmail = '';
 
-  constructor(private supabase: SupabaseService, private router: Router) {}
+  constructor(private supabase: SupabaseService, private router: Router, private themeService: ThemeService) {}
 
   ngOnInit() {
     this.supabase.user$.subscribe(user => {
       this.userEmail = user?.email || '';
     });
+    this.themeService.loadTheme();
   }
 
   async logout() {

@@ -165,15 +165,15 @@ import {
 
       <!-- Share Modal -->
       <div *ngIf="showShareModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="showShareModal = false">
-        <div class="glass-card p-6 w-full max-w-md animate-slide-up" (click)="$event.stopPropagation()">
-          <div class="flex items-center justify-between mb-4">
+        <div class="glass-card p-6 w-full max-w-md max-h-[85vh] flex flex-col animate-slide-up" (click)="$event.stopPropagation()">
+          <div class="flex items-center justify-between mb-4 flex-shrink-0">
             <h3 class="text-lg font-semibold text-white">Compartir Menú</h3>
             <button (click)="showShareModal = false" class="p-1 rounded-lg hover:bg-white/5 text-slate-400">
               <span class="material-icons-round">close</span>
             </button>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-4 flex-shrink-0">
             <button (click)="copyMenuText()" class="btn-secondary w-full flex items-center justify-center gap-2 mb-3">
               <span class="material-icons-round text-lg">content_copy</span>
               Copiar como texto
@@ -181,20 +181,31 @@ import {
             <p *ngIf="copied" class="text-center text-green-400 text-sm">¡Copiado!</p>
           </div>
 
-          <div *ngIf="friends.length > 0">
-            <p class="text-sm text-slate-400 mb-3">Enviar a un amigo:</p>
-            <div class="space-y-2">
-              <button *ngFor="let friend of friends" (click)="shareWithFriend(friend.id)"
-                      class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all text-left">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-sky-500 to-violet-500 flex items-center justify-center text-white text-sm font-bold">
+          <div *ngIf="friends.length > 0" class="flex flex-col flex-1 min-h-0">
+            <p class="text-sm text-slate-400 mb-3 flex-shrink-0">Selecciona amigos:</p>
+            <div class="space-y-2 overflow-y-auto flex-1 pr-1">
+              <button *ngFor="let friend of friends" (click)="toggleFriendSelection(friend.id)"
+                      class="w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left"
+                      [class]="selectedFriends[friend.id] ? 'bg-sky-500/15 border border-sky-500/30' : 'hover:bg-white/5 border border-transparent'">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-sky-500 to-violet-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                   {{ (friend.display_name || friend.email).charAt(0).toUpperCase() }}
                 </div>
-                <div>
+                <div class="flex-1 min-w-0">
                   <p class="text-sm text-slate-200">{{ friend.display_name || friend.email }}</p>
-                  <p class="text-xs text-slate-500">{{ friend.email }}</p>
+                  <p class="text-xs text-slate-500 truncate">{{ friend.email }}</p>
                 </div>
-                <span *ngIf="sharedWith[friend.id]" class="material-icons-round text-green-400 text-lg ml-auto">check_circle</span>
+                <span *ngIf="selectedFriends[friend.id]" class="material-icons-round text-sky-400 text-lg flex-shrink-0">check_circle</span>
+                <span *ngIf="!selectedFriends[friend.id]" class="material-icons-round text-slate-600 text-lg flex-shrink-0">radio_button_unchecked</span>
               </button>
+            </div>
+            <div class="flex-shrink-0 pt-3 mt-2 border-t border-slate-700/50">
+              <button (click)="shareWithSelected()" [disabled]="selectedFriendsCount === 0 || sharing"
+                      class="btn-primary w-full flex items-center justify-center gap-2">
+                <span *ngIf="sharing" class="material-icons-round animate-spin text-lg">refresh</span>
+                <span *ngIf="!sharing" class="material-icons-round text-lg">send</span>
+                {{ sharing ? 'Enviando...' : 'Enviar a ' + selectedFriendsCount + ' amigo' + (selectedFriendsCount !== 1 ? 's' : '') }}
+              </button>
+              <p *ngIf="shareMsg" class="text-center text-green-400 text-sm mt-2">{{ shareMsg }}</p>
             </div>
           </div>
           <p *ngIf="friends.length === 0" class="text-sm text-slate-500 text-center py-4">No tienes amigos aún. Añade amigos desde la pestaña Amigos.</p>
@@ -226,7 +237,9 @@ export class MenuComponent implements OnInit {
   selectedDayIndex = 0;
   selectedMealIndex = 0;
   copied = false;
-  sharedWith: Record<string, boolean> = {};
+  selectedFriends: Record<string, boolean> = {};
+  sharing = false;
+  shareMsg = '';
 
   private dragData: { dayIndex: number; mealIndex: number } | null = null;
 
@@ -378,7 +391,34 @@ export class MenuComponent implements OnInit {
   shareMenu() {
     this.showShareModal = true;
     this.copied = false;
-    this.sharedWith = {};
+    this.selectedFriends = {};
+    this.shareMsg = '';
+  }
+
+  toggleFriendSelection(friendId: string) {
+    this.selectedFriends[friendId] = !this.selectedFriends[friendId];
+  }
+
+  get selectedFriendsCount(): number {
+    return Object.values(this.selectedFriends).filter(v => v).length;
+  }
+
+  async shareWithSelected() {
+    if (!this.weeklyMenu || this.selectedFriendsCount === 0) return;
+    this.sharing = true;
+    this.shareMsg = '';
+    try {
+      const ids = Object.entries(this.selectedFriends).filter(([_, v]) => v).map(([id]) => id);
+      for (const friendId of ids) {
+        await this.supabase.shareMenuWithFriend(friendId, this.weeklyMenu);
+      }
+      this.shareMsg = `¡Menú enviado a ${ids.length} amigo${ids.length !== 1 ? 's' : ''}!`;
+      this.selectedFriends = {};
+    } catch (err) {
+      console.error('Error sharing menu:', err);
+    } finally {
+      this.sharing = false;
+    }
   }
 
   getMenuText(): string {
@@ -403,16 +443,6 @@ export class MenuComponent implements OnInit {
       this.copied = true;
       setTimeout(() => this.copied = false, 2000);
     } catch {}
-  }
-
-  async shareWithFriend(friendId: string) {
-    if (!this.weeklyMenu) return;
-    try {
-      await this.supabase.shareMenuWithFriend(friendId, this.weeklyMenu);
-      this.sharedWith[friendId] = true;
-    } catch (err) {
-      console.error('Error sharing menu:', err);
-    }
   }
 
   async saveMenu() {
