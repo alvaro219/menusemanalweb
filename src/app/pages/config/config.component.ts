@@ -60,23 +60,72 @@ import {
             </div>
           </div>
 
+          <!-- Background Colors -->
           <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">Fondo</label>
-            <div class="flex flex-wrap gap-2">
-              <button *ngFor="let bg of bgPresets; let i = index" (click)="applyBgPreset(bg)"
+            <label class="block text-sm font-medium text-slate-300 mb-3">Fondo (gradiente)</label>
+
+            <!-- Quick presets -->
+            <p class="text-xs text-slate-500 mb-2">Presets rápidos</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <button *ngFor="let bg of bgPresets" (click)="applyBgPreset(bg)"
                       [class]="isBgPresetActive(bg) ? 'ring-2 ring-white scale-105' : ''"
-                      class="w-16 h-8 rounded-lg transition-all"
+                      class="w-14 h-7 rounded-lg transition-all"
                       [style.background]="'linear-gradient(135deg, ' + bg.bgStart + ', ' + bg.bgMid + ', ' + bg.bgEnd + ')'">
               </button>
+            </div>
+
+            <!-- bgStart -->
+            <div class="mb-3">
+              <p class="text-xs text-slate-500 mb-1.5">Color inicio</p>
+              <div class="flex flex-wrap gap-2">
+                <button *ngFor="let c of bgColors" (click)="themeColors.bgStart = c; previewTheme()"
+                        [class]="themeColors.bgStart === c ? 'ring-2 ring-white scale-110' : ''"
+                        class="w-8 h-8 rounded-full transition-all" [style.background]="c">
+                </button>
+                <label class="w-8 h-8 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center cursor-pointer overflow-hidden relative" title="Color personalizado">
+                  <span class="material-icons-round text-slate-500 text-sm">add</span>
+                  <input type="color" [(ngModel)]="themeColors.bgStart" (input)="previewTheme()" class="absolute inset-0 opacity-0 cursor-pointer">
+                </label>
+              </div>
+            </div>
+
+            <!-- bgMid -->
+            <div class="mb-3">
+              <p class="text-xs text-slate-500 mb-1.5">Color centro</p>
+              <div class="flex flex-wrap gap-2">
+                <button *ngFor="let c of bgColors" (click)="themeColors.bgMid = c; previewTheme()"
+                        [class]="themeColors.bgMid === c ? 'ring-2 ring-white scale-110' : ''"
+                        class="w-8 h-8 rounded-full transition-all" [style.background]="c">
+                </button>
+                <label class="w-8 h-8 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center cursor-pointer overflow-hidden relative" title="Color personalizado">
+                  <span class="material-icons-round text-slate-500 text-sm">add</span>
+                  <input type="color" [(ngModel)]="themeColors.bgMid" (input)="previewTheme()" class="absolute inset-0 opacity-0 cursor-pointer">
+                </label>
+              </div>
+            </div>
+
+            <!-- bgEnd -->
+            <div class="mb-3">
+              <p class="text-xs text-slate-500 mb-1.5">Color final</p>
+              <div class="flex flex-wrap gap-2">
+                <button *ngFor="let c of bgColors" (click)="themeColors.bgEnd = c; previewTheme()"
+                        [class]="themeColors.bgEnd === c ? 'ring-2 ring-white scale-110' : ''"
+                        class="w-8 h-8 rounded-full transition-all" [style.background]="c">
+                </button>
+                <label class="w-8 h-8 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center cursor-pointer overflow-hidden relative" title="Color personalizado">
+                  <span class="material-icons-round text-slate-500 text-sm">add</span>
+                  <input type="color" [(ngModel)]="themeColors.bgEnd" (input)="previewTheme()" class="absolute inset-0 opacity-0 cursor-pointer">
+                </label>
+              </div>
             </div>
           </div>
 
           <!-- Preview -->
           <div class="p-4 rounded-xl border border-slate-700/50">
             <p class="text-xs text-slate-500 mb-2">Vista previa</p>
-            <div class="flex items-center gap-3">
-              <div class="h-8 flex-1 rounded-lg" [style.background]="'linear-gradient(135deg, ' + themeColors.primary + ', ' + themeColors.accent + ')'"></div>
-              <div class="h-8 w-16 rounded-lg" [style.background]="'linear-gradient(135deg, ' + themeColors.bgStart + ', ' + themeColors.bgMid + ')'"></div>
+            <div class="space-y-2">
+              <div class="h-8 w-full rounded-lg" [style.background]="'linear-gradient(135deg, ' + themeColors.primary + ', ' + themeColors.accent + ')'"></div>
+              <div class="h-10 w-full rounded-lg" [style.background]="'linear-gradient(180deg, ' + themeColors.bgStart + ', ' + themeColors.bgMid + ', ' + themeColors.bgEnd + ')'"></div>
             </div>
           </div>
         </div>
@@ -206,6 +255,13 @@ export class ConfigComponent implements OnInit {
     '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e',
     '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6',
     '#6366f1', '#0ea5e9'
+  ];
+
+  bgColors = [
+    '#0f172a', '#1e293b', '#0c0a09', '#1c1917', '#171717',
+    '#0a0a0a', '#0f0f23', '#1a1a3e', '#0d1117', '#161b22',
+    '#172554', '#1e1b4b', '#14532d', '#422006', '#4c0519',
+    '#27272a', '#262626', '#1f2937', '#111827', '#0c4a6e'
   ];
 
   bgPresets: Partial<ThemeColors>[] = [
