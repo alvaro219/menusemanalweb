@@ -62,44 +62,44 @@ import {
       <!-- Meals List -->
       <div class="grid gap-2">
         <div *ngFor="let meal of filteredMeals(); let i = index"
-             class="glass-card p-4 flex items-center gap-3 animate-slide-up !rounded-xl"
+             class="glass-card p-3 sm:p-4 flex items-center gap-2 sm:gap-3 animate-slide-up !rounded-xl overflow-hidden"
              [style.animation-delay]="i * 30 + 'ms'"
              [class.opacity-50]="meal.is_hidden">
-          <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+          <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                [style.background]="getTypeColor(meal.type) + '15'">
-            <span class="material-icons-round text-lg" [style.color]="getTypeColor(meal.type)">
+            <span class="material-icons-round text-base sm:text-lg" [style.color]="getTypeColor(meal.type)">
               {{ getTypeIcon(meal.type) }}
             </span>
           </div>
 
           <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="text-sm font-medium text-slate-200 truncate">{{ meal.name }}</span>
-              <span *ngIf="meal.is_favorite" class="material-icons-round text-xs text-pink-400">favorite</span>
-              <span *ngIf="meal.is_hidden" class="text-[10px] text-slate-500 bg-slate-700/50 px-1.5 py-0.5 rounded">oculta</span>
+            <div class="flex items-center gap-1 sm:gap-2">
+              <span class="text-xs sm:text-sm font-medium text-slate-200 truncate">{{ meal.name }}</span>
+              <span *ngIf="meal.is_favorite" class="material-icons-round text-xs text-pink-400 flex-shrink-0">favorite</span>
+              <span *ngIf="meal.is_hidden" class="text-[10px] text-slate-500 bg-slate-700/50 px-1 py-0.5 rounded flex-shrink-0">oculta</span>
             </div>
-            <div class="flex items-center gap-2 mt-0.5">
-              <span class="text-xs text-slate-500">{{ getMealTimeDisplay(meal.meal_time) }}</span>
-              <span class="text-xs px-1.5 py-0.5 rounded-full" [style.background]="getTypeColor(meal.type) + '15'" [style.color]="getTypeColor(meal.type)">
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <span class="text-[10px] sm:text-xs text-slate-500">{{ getMealTimeDisplay(meal.meal_time) }}</span>
+              <span class="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full" [style.background]="getTypeColor(meal.type) + '15'" [style.color]="getTypeColor(meal.type)">
                 {{ getTypeLabel(meal.type) }}
               </span>
             </div>
           </div>
 
-          <div class="flex items-center gap-1 flex-shrink-0">
-            <button (click)="toggleFavorite(meal)" class="p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+          <div class="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
+            <button (click)="toggleFavorite(meal)" class="p-1 sm:p-1.5 rounded-lg hover:bg-white/5 transition-colors"
                     [class]="meal.is_favorite ? 'text-pink-400' : 'text-slate-600 hover:text-pink-400'">
-              <span class="material-icons-round text-base">{{ meal.is_favorite ? 'favorite' : 'favorite_border' }}</span>
+              <span class="material-icons-round text-sm sm:text-base">{{ meal.is_favorite ? 'favorite' : 'favorite_border' }}</span>
             </button>
-            <button (click)="toggleHidden(meal)" class="p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+            <button (click)="toggleHidden(meal)" class="p-1 sm:p-1.5 rounded-lg hover:bg-white/5 transition-colors hidden sm:block"
                     [class]="meal.is_hidden ? 'text-amber-400' : 'text-slate-600 hover:text-amber-400'">
-              <span class="material-icons-round text-base">{{ meal.is_hidden ? 'visibility_off' : 'visibility' }}</span>
+              <span class="material-icons-round text-sm sm:text-base">{{ meal.is_hidden ? 'visibility_off' : 'visibility' }}</span>
             </button>
-            <button (click)="openEditModal(meal)" class="p-1.5 rounded-lg hover:bg-white/5 text-slate-600 hover:text-sky-400 transition-colors">
-              <span class="material-icons-round text-base">edit</span>
+            <button (click)="openEditModal(meal)" class="p-1 sm:p-1.5 rounded-lg hover:bg-white/5 text-slate-600 hover:text-sky-400 transition-colors">
+              <span class="material-icons-round text-sm sm:text-base">edit</span>
             </button>
-            <button (click)="deleteMeal(meal)" class="p-1.5 rounded-lg hover:bg-white/5 text-slate-600 hover:text-red-400 transition-colors">
-              <span class="material-icons-round text-base">delete_outline</span>
+            <button (click)="deleteMeal(meal)" class="p-1 sm:p-1.5 rounded-lg hover:bg-white/5 text-slate-600 hover:text-red-400 transition-colors">
+              <span class="material-icons-round text-sm sm:text-base">delete_outline</span>
             </button>
           </div>
         </div>

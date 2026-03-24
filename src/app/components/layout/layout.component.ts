@@ -30,7 +30,7 @@ import { ThemeService } from '../../services/theme.service';
       </header>
 
       <!-- Content -->
-      <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
+      <main class="flex-1 max-w-6xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 overflow-x-hidden">
         <router-outlet></router-outlet>
       </main>
 

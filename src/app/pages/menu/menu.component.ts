@@ -73,22 +73,22 @@ import {
       <!-- Card View -->
       <div *ngIf="!showWeeklyView" class="grid gap-4">
         <div *ngFor="let day of weeklyMenu?.days; let di = index"
-             class="glass-card p-5 animate-slide-up" [style.animation-delay]="di * 50 + 'ms'">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-violet-500/20 flex items-center justify-center">
-              <span class="text-lg font-bold text-sky-300">{{ day.day.charAt(0) }}</span>
+             class="glass-card p-4 sm:p-5 animate-slide-up overflow-hidden" [style.animation-delay]="di * 50 + 'ms'">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-violet-500/20 flex items-center justify-center flex-shrink-0">
+              <span class="text-base sm:text-lg font-bold text-sky-300">{{ day.day.charAt(0) }}</span>
             </div>
-            <h3 class="text-lg font-semibold text-white">{{ day.day }}</h3>
+            <h3 class="text-base sm:text-lg font-semibold text-white">{{ day.day }}</h3>
           </div>
 
-          <p class="text-xs text-slate-500 mb-2 flex items-center gap-1">
+          <p class="text-[10px] sm:text-xs text-slate-500 mb-2 flex items-center gap-1">
             <span class="material-icons-round text-xs">swap_vert</span>
-            Arrastra para reordenar comidas del mismo tipo
+            Arrastra para reordenar
           </p>
 
-          <div class="grid gap-3">
+          <div class="grid gap-2">
             <div *ngFor="let entry of day.meals; let mi = index"
-                 class="group flex items-center gap-3 p-3 rounded-xl bg-slate-800/40 hover:bg-slate-700/40 transition-all cursor-grab active:cursor-grabbing"
+                 class="group flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl bg-slate-800/40 hover:bg-slate-700/40 transition-all cursor-grab active:cursor-grabbing"
                  [ngClass]="{'ring-1 ring-sky-400/40': dragOverTarget?.day === di && dragOverTarget?.meal === mi}"
                  draggable="true"
                  (dragstart)="onDragStart($event, di, mi)"
@@ -97,38 +97,36 @@ import {
                  (drop)="onDrop($event, di, mi)"
                  (dragend)="onDragLeave()">
 
-              <!-- Drag Handle -->
-              <div class="flex-shrink-0 text-slate-600 group-hover:text-slate-400 transition-colors">
+              <!-- Drag Handle (hidden on small mobile) -->
+              <div class="flex-shrink-0 text-slate-600 group-hover:text-slate-400 transition-colors hidden sm:block">
                 <span class="material-icons-round text-base">drag_indicator</span>
-              </div>
-              
-              <!-- Meal Time Label -->
-              <div class="flex-shrink-0 w-20">
-                <span class="text-xs font-medium text-slate-500">{{ getMealTimeEmoji(entry.meal_time) }} {{ getMealTimeLabel(entry.meal_time) }}</span>
               </div>
 
               <!-- Type Icon -->
-              <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" 
+              <div class="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center"
                    [style.background]="getMealTypeColor(entry.meal_type) + '20'">
-                <span class="material-icons-round text-sm" [style.color]="getMealTypeColor(entry.meal_type)">
+                <span class="material-icons-round text-xs sm:text-sm" [style.color]="getMealTypeColor(entry.meal_type)">
                   {{ getMealTypeIcon(entry.meal_type) }}
                 </span>
               </div>
 
-              <!-- Meal Name -->
-              <span class="flex-1 text-sm text-slate-200 truncate">{{ entry.meal_name }}</span>
+              <!-- Meal Info -->
+              <div class="flex-1 min-w-0">
+                <span class="block text-sm text-slate-200 truncate">{{ entry.meal_name }}</span>
+                <span class="text-[10px] text-slate-500">{{ getMealTimeEmoji(entry.meal_time) }} {{ getMealTimeLabel(entry.meal_time) }}</span>
+              </div>
 
-              <!-- Actions -->
-              <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button (click)="randomizeMeal(di, mi)" class="p-1.5 rounded-lg hover:bg-white/5 text-slate-500 hover:text-sky-400 transition-colors" title="Aleatorizar">
-                  <span class="material-icons-round text-base">shuffle</span>
+              <!-- Actions (always visible on mobile via opacity) -->
+              <div class="flex items-center gap-0.5 sm:gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
+                <button (click)="randomizeMeal(di, mi)" class="p-1 sm:p-1.5 rounded-lg hover:bg-white/5 text-slate-500 hover:text-sky-400 transition-colors" title="Aleatorizar">
+                  <span class="material-icons-round text-sm sm:text-base">shuffle</span>
                 </button>
-                <button (click)="openMealSelector(di, mi)" class="p-1.5 rounded-lg hover:bg-white/5 text-slate-500 hover:text-violet-400 transition-colors" title="Seleccionar">
-                  <span class="material-icons-round text-base">edit_note</span>
+                <button (click)="openMealSelector(di, mi)" class="p-1 sm:p-1.5 rounded-lg hover:bg-white/5 text-slate-500 hover:text-violet-400 transition-colors hidden sm:block" title="Seleccionar">
+                  <span class="material-icons-round text-sm sm:text-base">edit_note</span>
                 </button>
-                <button (click)="toggleFavorite(di, mi)" class="p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+                <button (click)="toggleFavorite(di, mi)" class="p-1 sm:p-1.5 rounded-lg hover:bg-white/5 transition-colors"
                         [class]="entry.is_favorite ? 'text-pink-400' : 'text-slate-500 hover:text-pink-400'" title="Favorito">
-                  <span class="material-icons-round text-base">{{ entry.is_favorite ? 'favorite' : 'favorite_border' }}</span>
+                  <span class="material-icons-round text-sm sm:text-base">{{ entry.is_favorite ? 'favorite' : 'favorite_border' }}</span>
                 </button>
               </div>
             </div>
