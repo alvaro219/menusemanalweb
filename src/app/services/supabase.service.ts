@@ -219,11 +219,15 @@ export class SupabaseService {
   }
 
   async saveMenuConfig(config: MenuConfig): Promise<MenuConfig> {
+    const payload: any = {
+      type_distribution: config.type_distribution,
+      per_meal_time_distribution: config.per_meal_time_distribution || null
+    };
     const existing = await this.getMenuConfig();
     if (existing?.id) {
       const { data, error } = await this.supabase
         .from('menu_config')
-        .update({ type_distribution: config.type_distribution })
+        .update(payload)
         .eq('id', existing.id)
         .select()
         .single();
@@ -232,7 +236,7 @@ export class SupabaseService {
     } else {
       const { data, error } = await this.supabase
         .from('menu_config')
-        .insert({ user_id: this.currentUser?.id, type_distribution: config.type_distribution })
+        .insert({ user_id: this.currentUser?.id, ...payload })
         .select()
         .single();
       if (error) throw error;
