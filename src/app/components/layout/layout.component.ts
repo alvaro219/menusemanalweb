@@ -30,43 +30,43 @@ import { ThemeService } from '../../services/theme.service';
       </header>
 
       <!-- Content -->
-      <main class="flex-1 max-w-6xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 overflow-x-hidden">
+      <main class="flex-1 max-w-6xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 pb-24 sm:pb-6 overflow-x-hidden">
         <router-outlet></router-outlet>
       </main>
 
       <!-- Bottom Nav -->
-      <nav class="glass sticky bottom-0 z-50 border-t border-sky-500/10 safe-area-bottom">
+      <nav class="glass fixed bottom-0 left-0 right-0 z-50 border-t border-sky-500/10 safe-area-bottom">
         <div class="max-w-6xl mx-auto px-2">
           <div class="flex justify-around">
             <a routerLink="/menu" routerLinkActive="text-sky-400 bg-sky-500/10"
-               class="flex flex-col items-center gap-1 py-3 px-3 rounded-xl transition-all text-slate-400 hover:text-sky-300">
-              <span class="material-icons-round text-xl">calendar_month</span>
-              <span class="text-[10px] font-medium">Menú</span>
+               class="flex flex-col items-center gap-0.5 py-2 px-2 sm:px-3 sm:py-3 rounded-xl transition-all text-slate-400 hover:text-sky-300 min-w-0">
+              <span class="material-icons-round text-[20px] sm:text-xl">calendar_month</span>
+              <span class="text-[9px] sm:text-[10px] font-medium truncate">Menú</span>
             </a>
             <a routerLink="/meals" routerLinkActive="text-sky-400 bg-sky-500/10"
-               class="flex flex-col items-center gap-1 py-3 px-3 rounded-xl transition-all text-slate-400 hover:text-sky-300">
-              <span class="material-icons-round text-xl">lunch_dining</span>
-              <span class="text-[10px] font-medium">Comidas</span>
+               class="flex flex-col items-center gap-0.5 py-2 px-2 sm:px-3 sm:py-3 rounded-xl transition-all text-slate-400 hover:text-sky-300 min-w-0">
+              <span class="material-icons-round text-[20px] sm:text-xl">lunch_dining</span>
+              <span class="text-[9px] sm:text-[10px] font-medium truncate">Comidas</span>
             </a>
             <a routerLink="/meal-times" routerLinkActive="text-sky-400 bg-sky-500/10"
-               class="flex flex-col items-center gap-1 py-3 px-3 rounded-xl transition-all text-slate-400 hover:text-sky-300">
-              <span class="material-icons-round text-xl">schedule</span>
-              <span class="text-[10px] font-medium">Tiempos</span>
+               class="flex flex-col items-center gap-0.5 py-2 px-2 sm:px-3 sm:py-3 rounded-xl transition-all text-slate-400 hover:text-sky-300 min-w-0">
+              <span class="material-icons-round text-[20px] sm:text-xl">schedule</span>
+              <span class="text-[9px] sm:text-[10px] font-medium truncate">Tiempos</span>
             </a>
             <a routerLink="/meal-types" routerLinkActive="text-sky-400 bg-sky-500/10"
-               class="flex flex-col items-center gap-1 py-3 px-3 rounded-xl transition-all text-slate-400 hover:text-sky-300">
-              <span class="material-icons-round text-xl">category</span>
-              <span class="text-[10px] font-medium">Tipos</span>
+               class="flex flex-col items-center gap-0.5 py-2 px-2 sm:px-3 sm:py-3 rounded-xl transition-all text-slate-400 hover:text-sky-300 min-w-0">
+              <span class="material-icons-round text-[20px] sm:text-xl">category</span>
+              <span class="text-[9px] sm:text-[10px] font-medium truncate">Tipos</span>
             </a>
             <a routerLink="/friends" routerLinkActive="text-sky-400 bg-sky-500/10"
-               class="flex flex-col items-center gap-1 py-3 px-3 rounded-xl transition-all text-slate-400 hover:text-sky-300">
-              <span class="material-icons-round text-xl">people</span>
-              <span class="text-[10px] font-medium">Amigos</span>
+               class="flex flex-col items-center gap-0.5 py-2 px-2 sm:px-3 sm:py-3 rounded-xl transition-all text-slate-400 hover:text-sky-300 min-w-0">
+              <span class="material-icons-round text-[20px] sm:text-xl">people</span>
+              <span class="text-[9px] sm:text-[10px] font-medium truncate">Amigos</span>
             </a>
             <a routerLink="/config" routerLinkActive="text-sky-400 bg-sky-500/10"
-               class="flex flex-col items-center gap-1 py-3 px-3 rounded-xl transition-all text-slate-400 hover:text-sky-300">
-              <span class="material-icons-round text-xl">settings</span>
-              <span class="text-[10px] font-medium">Config</span>
+               class="flex flex-col items-center gap-0.5 py-2 px-2 sm:px-3 sm:py-3 rounded-xl transition-all text-slate-400 hover:text-sky-300 min-w-0">
+              <span class="material-icons-round text-[20px] sm:text-xl">settings</span>
+              <span class="text-[9px] sm:text-[10px] font-medium truncate">Config</span>
             </a>
           </div>
         </div>

@@ -13,16 +13,16 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="space-y-6 animate-fade-in pb-4">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div class="space-y-4 sm:space-y-6 animate-fade-in pb-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+          <h1 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
             <span class="material-icons-round text-sky-400">lunch_dining</span>
             Biblioteca de Comidas
           </h1>
           <p class="text-slate-400 text-sm mt-1">{{ meals.length }} comidas registradas</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 w-full sm:w-auto">
           <button (click)="openShareMealsModal()" class="btn-secondary flex items-center gap-2 text-sm">
             <span class="material-icons-round text-lg">share</span>
             Compartir
@@ -110,8 +110,8 @@ import {
       </div>
 
       <!-- Add/Edit Modal -->
-      <div *ngIf="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="showModal = false">
-        <div class="glass-card p-6 w-full max-w-md animate-slide-up max-h-[85vh] overflow-y-auto" (click)="$event.stopPropagation()">
+      <div *ngIf="showModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/60 backdrop-blur-sm" (click)="showModal = false">
+        <div class="glass-card p-5 sm:p-6 w-full sm:max-w-md animate-slide-up max-h-[90vh] sm:max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl" (click)="$event.stopPropagation()">
           <h3 class="text-lg font-semibold text-white mb-4">{{ editingMeal ? 'Editar' : 'Añadir' }} Comida</h3>
 
           <div class="space-y-4">
@@ -148,8 +148,8 @@ import {
       </div>
 
       <!-- Share Meals Modal -->
-      <div *ngIf="showShareModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="showShareModal = false">
-        <div class="glass-card p-6 w-full max-w-md max-h-[85vh] flex flex-col animate-slide-up" (click)="$event.stopPropagation()">
+      <div *ngIf="showShareModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/60 backdrop-blur-sm" (click)="showShareModal = false">
+        <div class="glass-card p-5 sm:p-6 w-full sm:max-w-md max-h-[85vh] flex flex-col animate-slide-up rounded-t-2xl sm:rounded-2xl" (click)="$event.stopPropagation()">
           <div class="flex items-center justify-between mb-4 flex-shrink-0">
             <h3 class="text-lg font-semibold text-white">Compartir Biblioteca de Comidas</h3>
             <button (click)="showShareModal = false" class="p-1 rounded-lg hover:bg-white/5 text-slate-400">

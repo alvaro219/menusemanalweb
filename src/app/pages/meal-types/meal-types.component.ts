@@ -10,10 +10,10 @@ import { CustomMealType } from '../../models/meal.model';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="space-y-6 animate-fade-in pb-4">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div class="space-y-4 sm:space-y-6 animate-fade-in pb-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+          <h1 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
             <span class="material-icons-round text-sky-400">category</span>
             Tipos de Comida
           </h1>
@@ -80,8 +80,8 @@ import { CustomMealType } from '../../models/meal.model';
       </div>
 
       <!-- Modal -->
-      <div *ngIf="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="showModal = false">
-        <div class="glass-card p-6 w-full max-w-md animate-slide-up" (click)="$event.stopPropagation()">
+      <div *ngIf="showModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/60 backdrop-blur-sm" (click)="showModal = false">
+        <div class="glass-card p-5 sm:p-6 w-full sm:max-w-md animate-slide-up rounded-t-2xl sm:rounded-2xl" (click)="$event.stopPropagation()">
           <h3 class="text-lg font-semibold text-white mb-4">{{ editing ? 'Editar' : 'Añadir' }} Tipo</h3>
           <div class="space-y-4">
             <div>

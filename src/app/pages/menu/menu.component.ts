@@ -13,82 +13,112 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="space-y-6 animate-fade-in pb-4">
+    <div class="space-y-4 sm:space-y-6 animate-fade-in pb-4">
       <!-- Header -->
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+          <h1 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
             <span class="material-icons-round text-sky-400">calendar_month</span>
             Menú Semanal
           </h1>
           <p class="text-slate-400 text-sm mt-1">Planifica tus comidas de la semana</p>
         </div>
-        <div class="flex flex-wrap gap-2">
-          <button (click)="generateMenu()" class="btn-primary flex items-center gap-2 text-sm">
-            <span class="material-icons-round text-lg">auto_awesome</span>
+        <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+          <button (click)="generateMenu()" class="btn-primary flex items-center gap-1.5 sm:gap-2 text-sm">
+            <span class="material-icons-round text-base sm:text-lg">auto_awesome</span>
             Generar Menú
           </button>
-          <button (click)="showWeeklyView = !showWeeklyView" class="btn-secondary flex items-center gap-2 text-sm">
-            <span class="material-icons-round text-lg">{{ showWeeklyView ? 'view_agenda' : 'table_chart' }}</span>
+          <button (click)="showWeeklyView = !showWeeklyView" class="btn-secondary flex items-center gap-1.5 sm:gap-2 text-sm">
+            <span class="material-icons-round text-base sm:text-lg">{{ showWeeklyView ? 'view_agenda' : 'table_chart' }}</span>
             {{ showWeeklyView ? 'Vista Tarjetas' : 'Vista Semanal' }}
           </button>
-          <button (click)="shareMenu()" class="btn-secondary flex items-center gap-2 text-sm">
-            <span class="material-icons-round text-lg">share</span>
+          <button (click)="shareMenu()" class="btn-secondary flex items-center gap-1.5 sm:gap-2 text-sm">
+            <span class="material-icons-round text-base sm:text-lg">share</span>
             Compartir
           </button>
         </div>
       </div>
 
-      <!-- Weekly Table View -->
-      <div *ngIf="showWeeklyView" class="glass-card p-4 overflow-x-auto animate-slide-up">
-        <table class="w-full min-w-[600px]">
-          <thead>
-            <tr class="border-b border-sky-500/10">
-              <th class="text-left py-3 px-2 text-sm font-semibold text-slate-300">Día</th>
-              <th *ngFor="let mt of mealTimes" class="text-left py-3 px-2 text-sm font-semibold text-slate-300">
-                {{ mt.emoji }} {{ mt.display_name }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let day of weeklyMenu?.days" class="border-b border-sky-500/5 hover:bg-white/[0.02] transition-colors">
-              <td class="py-3 px-2 font-medium text-sky-300 text-sm">{{ day.day }}</td>
-              <td *ngFor="let mt of mealTimes" class="py-3 px-2">
+      <!-- Weekly Table View - Desktop -->
+      <div *ngIf="showWeeklyView" class="glass-card p-3 sm:p-4 animate-slide-up">
+        <!-- Desktop table -->
+        <div class="hidden sm:block overflow-x-auto">
+          <table class="w-full min-w-[600px]">
+            <thead>
+              <tr class="border-b border-sky-500/10">
+                <th class="text-left py-3 px-2 text-sm font-semibold text-slate-300">Día</th>
+                <th *ngFor="let mt of mealTimes" class="text-left py-3 px-2 text-sm font-semibold text-slate-300">
+                  {{ mt.emoji }} {{ mt.display_name }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let day of weeklyMenu?.days" class="border-b border-sky-500/5 hover:bg-white/[0.02] transition-colors">
+                <td class="py-3 px-2 font-medium text-sky-300 text-sm">{{ day.day }}</td>
+                <td *ngFor="let mt of mealTimes" class="py-3 px-2">
+                  <ng-container *ngIf="getMealForTime(day, mt.name) as entry">
+                    <div class="flex items-center gap-2">
+                      <span class="material-icons-round text-xs" [style.color]="getMealTypeColor(entry.meal_type)">
+                        {{ getMealTypeIcon(entry.meal_type) }}
+                      </span>
+                      <span class="text-sm text-slate-300">{{ entry.meal_name }}</span>
+                      <span *ngIf="entry.is_favorite" class="material-icons-round text-xs text-pink-400">favorite</span>
+                    </div>
+                  </ng-container>
+                  <span *ngIf="!getMealForTime(day, mt.name)" class="text-slate-600 text-xs italic">Sin asignar</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- Mobile list -->
+        <div class="sm:hidden space-y-3">
+          <div *ngFor="let day of weeklyMenu?.days" class="p-3 rounded-xl bg-slate-800/30">
+            <p class="text-sm font-semibold text-sky-300 mb-2">{{ day.day }}</p>
+            <div class="space-y-1.5">
+              <div *ngFor="let mt of mealTimes" class="flex items-start gap-2">
                 <ng-container *ngIf="getMealForTime(day, mt.name) as entry">
-                  <div class="flex items-center gap-2">
-                    <span class="material-icons-round text-xs" [style.color]="getMealTypeColor(entry.meal_type)">
-                      {{ getMealTypeIcon(entry.meal_type) }}
-                    </span>
-                    <span class="text-sm text-slate-300">{{ entry.meal_name }}</span>
-                    <span *ngIf="entry.is_favorite" class="material-icons-round text-xs text-pink-400">favorite</span>
+                  <span class="material-icons-round text-xs mt-0.5" [style.color]="getMealTypeColor(entry.meal_type)">
+                    {{ getMealTypeIcon(entry.meal_type) }}
+                  </span>
+                  <div class="flex-1 min-w-0">
+                    <span class="text-sm text-slate-300 break-words">{{ entry.meal_name }}</span>
+                    <span *ngIf="entry.is_favorite" class="material-icons-round text-xs text-pink-400 ml-1">favorite</span>
+                    <p class="text-[10px] text-slate-500">{{ mt.emoji }} {{ mt.display_name }}</p>
                   </div>
                 </ng-container>
-                <span *ngIf="!getMealForTime(day, mt.name)" class="text-slate-600 text-xs italic">Sin asignar</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                <ng-container *ngIf="!getMealForTime(day, mt.name)">
+                  <span class="text-slate-600 text-xs italic">{{ mt.emoji }} Sin asignar</span>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Card View -->
-      <div *ngIf="!showWeeklyView" class="grid gap-4">
+      <div *ngIf="!showWeeklyView" class="grid gap-3 sm:gap-4">
         <div *ngFor="let day of weeklyMenu?.days; let di = index"
-             class="glass-card p-4 sm:p-5 animate-slide-up overflow-hidden" [style.animation-delay]="di * 50 + 'ms'">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-violet-500/20 flex items-center justify-center flex-shrink-0">
-              <span class="text-base sm:text-lg font-bold text-sky-300">{{ day.day.charAt(0) }}</span>
+             class="glass-card p-3 sm:p-5 animate-slide-up overflow-hidden" [style.animation-delay]="di * 50 + 'ms'">
+          <div class="flex items-center gap-2.5 sm:gap-3 mb-2 sm:mb-3">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-violet-500/20 flex items-center justify-center flex-shrink-0">
+              <span class="text-sm sm:text-lg font-bold text-sky-300">{{ day.day.charAt(0) }}</span>
             </div>
             <h3 class="text-base sm:text-lg font-semibold text-white">{{ day.day }}</h3>
           </div>
 
-          <p class="text-[10px] sm:text-xs text-slate-500 mb-2 flex items-center gap-1">
+          <p class="text-[10px] text-slate-500 mb-2 flex items-center gap-1 sm:hidden">
+            <span class="material-icons-round text-xs">touch_app</span>
+            Mantén pulsado para reordenar
+          </p>
+          <p class="text-[10px] sm:text-xs text-slate-500 mb-2 items-center gap-1 hidden sm:flex">
             <span class="material-icons-round text-xs">swap_vert</span>
             Arrastra para reordenar
           </p>
 
-          <div class="grid gap-2">
+          <div class="grid gap-1.5 sm:gap-2">
             <div *ngFor="let entry of day.meals; let mi = index"
-                 class="group flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl bg-slate-800/40 hover:bg-slate-700/40 transition-all cursor-grab active:cursor-grabbing"
+                 class="group flex items-center gap-1.5 sm:gap-3 p-2 sm:p-3 rounded-xl bg-slate-800/40 hover:bg-slate-700/40 transition-all cursor-grab active:cursor-grabbing overflow-hidden"
                  [ngClass]="{'ring-1 ring-sky-400/40': dragOverTarget?.day === di && dragOverTarget?.meal === mi}"
                  draggable="true"
                  (dragstart)="onDragStart($event, di, mi)"
@@ -97,7 +127,7 @@ import {
                  (drop)="onDrop($event, di, mi)"
                  (dragend)="onDragLeave()">
 
-              <!-- Drag Handle (hidden on small mobile) -->
+              <!-- Drag Handle (hidden on mobile) -->
               <div class="flex-shrink-0 text-slate-600 group-hover:text-slate-400 transition-colors hidden sm:block">
                 <span class="material-icons-round text-base">drag_indicator</span>
               </div>
@@ -112,21 +142,21 @@ import {
 
               <!-- Meal Info -->
               <div class="flex-1 min-w-0">
-                <span class="block text-sm text-slate-200 truncate">{{ entry.meal_name }}</span>
+                <span class="block text-[13px] sm:text-sm text-slate-200 truncate">{{ entry.meal_name }}</span>
                 <span class="text-[10px] text-slate-500">{{ getMealTimeEmoji(entry.meal_time) }} {{ getMealTimeLabel(entry.meal_time) }}</span>
               </div>
 
-              <!-- Actions (always visible on mobile via opacity) -->
-              <div class="flex items-center gap-0.5 sm:gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
+              <!-- Actions -->
+              <div class="flex items-center gap-0 sm:gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
                 <button (click)="randomizeMeal(di, mi)" class="p-1 sm:p-1.5 rounded-lg hover:bg-white/5 text-slate-500 hover:text-sky-400 transition-colors" title="Aleatorizar">
-                  <span class="material-icons-round text-sm sm:text-base">shuffle</span>
+                  <span class="material-icons-round text-[16px] sm:text-base">shuffle</span>
                 </button>
-                <button (click)="openMealSelector(di, mi)" class="p-1 sm:p-1.5 rounded-lg hover:bg-white/5 text-slate-500 hover:text-violet-400 transition-colors hidden sm:block" title="Seleccionar">
-                  <span class="material-icons-round text-sm sm:text-base">edit_note</span>
+                <button (click)="openMealSelector(di, mi)" class="p-1 sm:p-1.5 rounded-lg hover:bg-white/5 text-slate-500 hover:text-violet-400 transition-colors" title="Seleccionar">
+                  <span class="material-icons-round text-[16px] sm:text-base">edit_note</span>
                 </button>
                 <button (click)="toggleFavorite(di, mi)" class="p-1 sm:p-1.5 rounded-lg hover:bg-white/5 transition-colors"
                         [class]="entry.is_favorite ? 'text-pink-400' : 'text-slate-500 hover:text-pink-400'" title="Favorito">
-                  <span class="material-icons-round text-sm sm:text-base">{{ entry.is_favorite ? 'favorite' : 'favorite_border' }}</span>
+                  <span class="material-icons-round text-[16px] sm:text-base">{{ entry.is_favorite ? 'favorite' : 'favorite_border' }}</span>
                 </button>
               </div>
             </div>
@@ -135,8 +165,8 @@ import {
       </div>
 
       <!-- Meal Selector Modal -->
-      <div *ngIf="showMealSelector" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="showMealSelector = false">
-        <div class="glass-card p-6 w-full max-w-lg max-h-[80vh] flex flex-col animate-slide-up" (click)="$event.stopPropagation()">
+      <div *ngIf="showMealSelector" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 bg-black/60 backdrop-blur-sm" (click)="showMealSelector = false">
+        <div class="glass-card p-5 sm:p-6 w-full sm:max-w-lg max-h-[85vh] sm:max-h-[80vh] flex flex-col animate-slide-up rounded-t-2xl sm:rounded-2xl" (click)="$event.stopPropagation()">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-white">Seleccionar Comida</h3>
             <button (click)="showMealSelector = false" class="p-1 rounded-lg hover:bg-white/5 text-slate-400">
@@ -176,8 +206,8 @@ import {
       </div>
 
       <!-- Share Modal -->
-      <div *ngIf="showShareModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="showShareModal = false">
-        <div class="glass-card p-6 w-full max-w-md max-h-[85vh] flex flex-col animate-slide-up" (click)="$event.stopPropagation()">
+      <div *ngIf="showShareModal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 bg-black/60 backdrop-blur-sm" (click)="showShareModal = false">
+        <div class="glass-card p-5 sm:p-6 w-full sm:max-w-md max-h-[85vh] flex flex-col animate-slide-up rounded-t-2xl sm:rounded-2xl" (click)="$event.stopPropagation()">
           <div class="flex items-center justify-between mb-4 flex-shrink-0">
             <h3 class="text-lg font-semibold text-white">Compartir Menú</h3>
             <button (click)="showShareModal = false" class="p-1 rounded-lg hover:bg-white/5 text-slate-400">

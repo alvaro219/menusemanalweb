@@ -63,6 +63,13 @@ body {
   transform: translateY(-2px);
 }
 
+@media (hover: none) {
+  .glass-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
 .btn-primary {
   @apply px-4 py-2 rounded-xl font-medium transition-all duration-300;
   background: linear-gradient(135deg, var(--theme-primary), var(--theme-accent));
@@ -143,4 +150,20 @@ body {
 
 .glow-text {
   text-shadow: 0 0 20px rgba(var(--theme-primary-rgb), 0.5);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (max-width: 640px) {
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    @apply px-3 py-2 text-sm;
+  }
+
+  .input-field {
+    @apply py-2.5 text-sm;
+  }
 }

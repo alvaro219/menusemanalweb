@@ -7,8 +7,8 @@ import { ConfirmModalService } from './confirm-modal.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div *ngIf="service.visible" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="service.cancel()">
-      <div class="glass-card p-6 w-full max-w-sm animate-slide-up" (click)="$event.stopPropagation()">
+    <div *ngIf="service.visible" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-black/60 backdrop-blur-sm" (click)="service.cancel()">
+      <div class="glass-card p-5 sm:p-6 w-full sm:max-w-sm animate-slide-up rounded-t-2xl sm:rounded-2xl" (click)="$event.stopPropagation()">
         <h3 class="text-lg font-semibold text-white mb-2">{{ service.title }}</h3>
         <p class="text-sm text-slate-400 mb-6">{{ service.message }}</p>
         <div class="flex gap-3">

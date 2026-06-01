@@ -10,10 +10,10 @@ import { FriendRequest, UserProfile, SharedMenu, Meal, WeeklyMenu, MEAL_TYPE_COL
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="space-y-6 animate-fade-in pb-4">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div class="space-y-4 sm:space-y-6 animate-fade-in pb-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+          <h1 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
             <span class="material-icons-round text-sky-400">people</span>
             Amigos
           </h1>
@@ -25,30 +25,30 @@ import { FriendRequest, UserProfile, SharedMenu, Meal, WeeklyMenu, MEAL_TYPE_COL
       <div class="flex gap-1 p-1 rounded-xl bg-slate-800/40">
         <button (click)="activeTab = 'friends'" 
                 [class]="activeTab === 'friends' ? 'bg-sky-500/20 text-sky-300' : 'text-slate-400 hover:text-slate-300'"
-                class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2">
+                class="flex-1 py-2 px-1.5 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-1 sm:gap-2 min-w-0">
           <span class="material-icons-round text-base">group</span>
-          Amigos ({{ friends.length }})
+          <span class="truncate">Amigos ({{ friends.length }})</span>
         </button>
         <button (click)="activeTab = 'requests'" 
                 [class]="activeTab === 'requests' ? 'bg-sky-500/20 text-sky-300' : 'text-slate-400 hover:text-slate-300'"
-                class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 relative">
+                class="flex-1 py-2 px-1.5 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-1 sm:gap-2 relative min-w-0">
           <span class="material-icons-round text-base">mail</span>
-          Solicitudes
+          <span class="truncate">Solicitudes</span>
           <span *ngIf="pendingRequests.length > 0" class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold">
             {{ pendingRequests.length }}
           </span>
         </button>
         <button (click)="activeTab = 'shared'" 
                 [class]="activeTab === 'shared' ? 'bg-sky-500/20 text-sky-300' : 'text-slate-400 hover:text-slate-300'"
-                class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2">
+                class="flex-1 py-2 px-1.5 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-1 sm:gap-2 min-w-0">
           <span class="material-icons-round text-base">share</span>
-          Recibidos
+          <span class="truncate">Recibidos</span>
         </button>
       </div>
 
       <!-- Send Friend Request -->
-      <div class="glass-card p-4 !rounded-xl">
-        <div class="flex gap-3">
+      <div class="glass-card p-3 sm:p-4 !rounded-xl">
+        <div class="flex gap-2 sm:gap-3">
           <input [(ngModel)]="friendEmail" placeholder="Nombre de usuario o nombre..." class="input-field flex-1" (keyup.enter)="sendRequest()">
           <button (click)="sendRequest()" [disabled]="!friendEmail.trim() || sendingRequest" class="btn-primary flex items-center gap-2 text-sm whitespace-nowrap">
             <span *ngIf="sendingRequest" class="material-icons-round animate-spin text-base">refresh</span>

@@ -24,7 +24,7 @@ import {
       </div>
 
       <!-- Theme Colors -->
-      <div class="glass-card p-6 !rounded-xl">
+      <div class="glass-card p-4 sm:p-6 !rounded-xl">
         <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <span class="material-icons-round text-base">palette</span>
           Colores del Tema
@@ -144,17 +144,17 @@ import {
       </div>
 
       <!-- Per-MealTime Type Distribution -->
-      <div class="glass-card p-6 !rounded-xl">
-        <h2 class="text-lg font-semibold text-white mb-2">Distribución de Tipos por Tiempo de Comida</h2>
-        <p class="text-sm text-slate-400 mb-6">Configura el porcentaje de cada tipo para cada tiempo de comida</p>
+      <div class="glass-card p-4 sm:p-6 !rounded-xl">
+        <h2 class="text-base sm:text-lg font-semibold text-white mb-2">Distribución de Tipos por Tiempo de Comida</h2>
+        <p class="text-xs sm:text-sm text-slate-400 mb-4 sm:mb-6">Configura el porcentaje de cada tipo para cada tiempo de comida</p>
 
         <!-- Meal time tabs -->
-        <div class="flex gap-1 p-1 rounded-xl bg-slate-800/40 mb-6">
+        <div class="flex gap-1 p-1 rounded-xl bg-slate-800/40 mb-4 sm:mb-6 overflow-x-auto">
           <button *ngFor="let mt of mealTimes" (click)="selectedMealTime = mt.name"
                   [class]="selectedMealTime === mt.name ? 'bg-sky-500/20 text-sky-300' : 'text-slate-400 hover:text-slate-300'"
-                  class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2">
+                  class="flex-1 min-w-0 py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap">
             <span>{{ mt.emoji }}</span>
-            {{ mt.display_name }}
+            <span class="truncate">{{ mt.display_name }}</span>
           </button>
         </div>
 
@@ -198,7 +198,7 @@ import {
       </div>
 
       <!-- Profile -->
-      <div class="glass-card p-6 !rounded-xl">
+      <div class="glass-card p-4 sm:p-6 !rounded-xl">
         <h2 class="text-lg font-semibold text-white mb-4">Perfil</h2>
         <div class="space-y-4">
           <div>
